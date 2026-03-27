@@ -17,6 +17,7 @@ import Login from "./pages/Login";
 import { WorkspaceHome, WorkspaceColeta, WorkspaceBeneficiamento } from "./pages/workspace/WorkspacePages";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOperacao from "./pages/admin/AdminOperacao";
+import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import { SADashboard, SACompanies } from "./pages/super-admin/SuperAdminPages";
 import NotFound from "./pages/NotFound";
 
@@ -58,7 +59,7 @@ const App = () => (
               <Route path="operacao" element={<AdminOperacao />} />
               <Route path="cargas" element={<Placeholder title="Gestão de Cargas" />} />
               <Route path="produtores" element={<Placeholder title="Gestão de Produtores" />} />
-              <Route path="usuarios" element={<Placeholder title="Gestão de Usuários" />} />
+              <Route path="usuarios" element={<AdminUsuarios />} />
               <Route path="relatorios" element={<Placeholder title="Relatórios e Dashboards" />} />
               <Route path="configuracoes" element={<Placeholder title="Configurações do Sistema" />} />
 

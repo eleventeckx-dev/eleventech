@@ -20,6 +20,7 @@ export type User = {
   email: string;
   role: UserRole;
   avatar?: string;
+  status?: 'active' | 'inactive'; // Adicionado status
   permissions?: Permission;
   createdAt: string;
   updatedAt: string;
