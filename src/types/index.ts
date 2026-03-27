@@ -88,6 +88,7 @@ export type FinancialRecord = {
   grossValue: number; // Calculado
   finalValue: number; // Calculado
   scheduledPaymentDate: string;
+  observations?: string; // Novo: Notas do financeiro
 };
 
 export type PaymentRecord = {

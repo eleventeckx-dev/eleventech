@@ -3,7 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { useAgro } from '../../contexts/AgroContext';
 import { 
   CheckCircle2, ChevronRight, Factory, User, LogOut, DollarSign, 
-  ShieldAlert, ImagePlus, X, Calendar, Clock, Plus, Truck, Scale, AlertTriangle, ArrowRight
+  ShieldAlert, ImagePlus, X, Calendar, Clock, Plus, Truck, Scale, AlertTriangle, ArrowRight, Receipt
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -601,7 +601,54 @@ export const UserBeneficiamento = () => {
 
 // ---- FINANCEIRO (PASSO 3) ----
 export const UserFinanceiro = () => {
-  const { currentUser } = useAgro();
+  const { loads, producers, updateLoad, currentUser } = useAgro();
+  
+  const pendingLoads = loads.filter(l => l.status === 'beneficiado');
+  const [selectedLoadId, setSelectedLoadId] = useState('');
+  
+  const [form, setForm] = useState({ 
+    pricePerKg: '', 
+    discounts: '', 
+    scheduledPaymentDate: '',
+    observations: '' 
+  });
+
+  const selectedLoad = pendingLoads.find(l => l.id === selectedLoadId);
+
+  // Variáveis calculadas em tempo real
+  const netWeight = selectedLoad?.processing?.netWeight || 0;
+  const price = Number(form.pricePerKg) || 0;
+  const discounts = Number(form.discounts) || 0;
+  
+  const grossValue = netWeight * price;
+  const finalValue = Math.max(0, grossValue - discounts);
+
+  const closeForm = () => {
+    setSelectedLoadId('');
+    setForm({ pricePerKg: '', discounts: '', scheduledPaymentDate: '', observations: '' });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLoad) return;
+
+    updateLoad(selectedLoad.id, {
+      status: 'pagamento_programado',
+      financial: {
+        id: `fin_${Date.now()}`,
+        netWeight,
+        pricePerKg: price,
+        discounts,
+        grossValue,
+        finalValue,
+        scheduledPaymentDate: form.scheduledPaymentDate,
+        observations: form.observations
+      }
+    });
+    
+    toast.success('Fechamento financeiro concluído!');
+    closeForm();
+  };
 
   if (!currentUser?.permissions?.canManageFinancial) {
     return (
@@ -614,17 +661,159 @@ export const UserFinanceiro = () => {
   }
 
   return (
-    <div className="p-4 pb-20">
+    <div className="p-4 pb-24">
+      {/* Cabeçalho da Lista */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">3. Financeiro</h2>
-        <p className="text-gray-500 text-sm">Cálculos e fechamentos de pagamentos</p>
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Financeiro</h2>
+        <p className="text-gray-500 text-sm">Fechamento e agenda de pagamentos</p>
       </div>
-      
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center text-slate-400 mt-10">
-        <DollarSign size={48} className="text-slate-300 mb-4" />
-        <p className="font-medium text-slate-600">Interface de Fechamento Financeiro</p>
-        <p className="text-sm mt-2">Nesta etapa, o usuário com permissão lançará os valores da carga já beneficiada.</p>
-      </div>
+
+      {/* Lista de Cargas Pendentes (Apenas Status: Beneficiado) */}
+      {pendingLoads.length === 0 ? (
+        <div className="text-center p-8 bg-white rounded-3xl border border-gray-100 border-dashed shadow-sm mt-10">
+          <DollarSign size={48} className="mx-auto text-gray-300 mb-4" strokeWidth={1.5} />
+          <h3 className="text-gray-800 font-bold mb-1">Nenhuma carga para fechar</h3>
+          <p className="text-gray-500 text-sm">As cargas que passaram pelo barracão aparecerão aqui para cálculo do valor.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {pendingLoads.map(load => {
+            const prod = producers.find(p => p.id === load.producerId);
+            return (
+              <div 
+                key={load.id} 
+                onClick={() => setSelectedLoadId(load.id)} 
+                className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer active:scale-95 transition-all group hover:border-amber-200"
+              >
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Aguardando Fechamento</p>
+                  <p className="font-bold text-gray-800 leading-tight">{prod?.name}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                     <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[11px] font-bold">
+                       {load.collection.type}
+                     </span>
+                     <span className="text-xs font-bold text-amber-600">
+                       Líquido: {load.processing?.netWeight} kg
+                     </span>
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                  <ArrowRight size={20} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* MODAL / POP-UP MOBILE (FULL SCREEN) - Formulário do Financeiro */}
+      {selectedLoadId && selectedLoad && (
+        <div className="fixed inset-0 z-50 bg-gray-50 flex flex-col animate-in slide-in-from-bottom-full duration-300">
+          
+          <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sticky top-0 z-10 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 tracking-tight flex items-center gap-2">
+               <Receipt className="text-amber-500" size={20} /> Fechar Pagamento
+            </h2>
+            <button onClick={closeForm} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 pb-32 custom-scrollbar">
+            
+            {/* Resumo da Carga (Read-Only) */}
+            <div className="bg-amber-50 border border-amber-100 rounded-3xl p-5 mb-6">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1">Carga Beneficiada</p>
+                  <h3 className="font-bold text-amber-900">{producers.find(p => p.id === selectedLoad.producerId)?.name}</h3>
+                </div>
+                <div className="text-right">
+                   <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1">Peso Líquido</p>
+                   <p className="font-black text-xl text-amber-700">{netWeight} <span className="text-sm">kg</span></p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 bg-amber-100/50 p-2 rounded-lg">
+                <span>{selectedLoad.collection.type}</span> • 
+                <span>Roça: {selectedLoad.collection.grossWeight} kg</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              
+              {/* Bloco 1: Valores */}
+              <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+                <div className="flex items-center gap-2 mb-2 border-b border-gray-50 pb-3">
+                   <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">1</div>
+                   <h3 className="font-bold text-gray-800">Precificação</h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-gray-700 ml-1">Preço por kg (R$)</label>
+                    <input required type="number" step="0.01" placeholder="0.00" className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-emerald-700 font-black text-xl text-center" value={form.pricePerKg} onChange={e => setForm({...form, pricePerKg: e.target.value})} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-gray-700 ml-1">Descontos (R$)</label>
+                    <input required type="number" step="0.01" placeholder="0.00" className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition text-red-600 font-black text-xl text-center" value={form.discounts} onChange={e => setForm({...form, discounts: e.target.value})} />
+                  </div>
+                </div>
+
+                {/* Subtotal Dinâmico */}
+                {form.pricePerKg && (
+                  <div className="p-3 bg-gray-50 rounded-xl flex justify-between items-center text-sm font-bold border border-gray-100 mt-2 text-gray-600">
+                    <span>Valor Bruto Gerado:</span>
+                    <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(grossValue)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Lousa Dinâmica de Resultado Final */}
+              <div className="bg-gray-900 rounded-3xl p-6 text-white shadow-xl shadow-gray-900/20 relative overflow-hidden">
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
+                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Valor Final a Pagar</p>
+                 <div className="flex items-end gap-1 mt-2">
+                   <span className="text-xl font-bold text-emerald-500 mb-1.5">R$</span>
+                   <span className="text-5xl font-black tracking-tighter text-white">
+                     {finalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                   </span>
+                 </div>
+                 <div className="mt-5 pt-4 border-t border-gray-800 flex justify-between text-xs font-medium text-gray-400">
+                    <span>Líquido: {netWeight} kg</span>
+                    <span>Desc: R$ {discounts.toFixed(2)}</span>
+                 </div>
+              </div>
+
+              {/* Bloco 2: Agendamento e Notas */}
+              <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+                <div className="flex items-center gap-2 mb-2 border-b border-gray-50 pb-3">
+                   <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">2</div>
+                   <h3 className="font-bold text-gray-800">Agendamento</h3>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-gray-700 ml-1">Data Programada para Pagamento</label>
+                  <input required type="date" className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition text-gray-800 font-bold" value={form.scheduledPaymentDate} onChange={e => setForm({...form, scheduledPaymentDate: e.target.value})} />
+                </div>
+
+                <div className="space-y-1.5 pt-2">
+                  <label className="text-sm font-bold text-gray-700 ml-1">Observações do Financeiro (Opcional)</label>
+                  <textarea placeholder="Ex: Desconto referente a adiantamento..." rows={2} className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition text-gray-800 font-medium resize-none" value={form.observations} onChange={e => setForm({...form, observations: e.target.value})} />
+                </div>
+              </div>
+
+              {/* Botão de Submit */}
+              <button 
+                type="submit" 
+                disabled={!form.pricePerKg || !form.scheduledPaymentDate}
+                className="w-full bg-amber-500 disabled:bg-gray-300 disabled:text-gray-500 text-white font-black text-lg py-5 rounded-2xl shadow-[0_8px_30px_rgb(245,158,11,0.3)] disabled:shadow-none active:scale-[0.98] transition-all flex items-center justify-center gap-3 mt-8"
+              >
+                <CheckCircle2 size={24} /> Fechar Financeiro
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
