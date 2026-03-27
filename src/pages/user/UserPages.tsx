@@ -828,6 +828,12 @@ export const UserPerfil = () => {
     navigate('/');
   };
 
+  const getRoleName = (role: string | undefined) => {
+    if (role === 'super_admin') return 'Super Administrador';
+    if (role === 'admin') return 'Administrador';
+    return 'Colaborador Operacional';
+  };
+
   return (
     <div className="p-4 pb-20">
       <div className="mb-6">
@@ -842,7 +848,7 @@ export const UserPerfil = () => {
         <h3 className="text-xl font-bold text-gray-800">{currentUser?.name}</h3>
         <p className="text-gray-500">{currentUser?.email}</p>
         <div className="mt-3 inline-block px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold uppercase tracking-wider">
-          Colaborador Operacional
+          {getRoleName(currentUser?.role)}
         </div>
       </div>
 
