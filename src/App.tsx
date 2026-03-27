@@ -24,7 +24,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Placeholders minimalistas para as rotas que não implementamos os arquivos gigantes
+// Placeholder apenas para as rotas móveis que ainda estão em desenvolvimento
 const Placeholder = ({ title }: { title: string }) => (
   <div className="flex flex-col items-center justify-center h-full text-slate-400">
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center">
@@ -51,25 +51,13 @@ const App = () => (
               <Route path="companies" element={<SACompanies />} />
             </Route>
 
-            {/* ADMIN ROUTES */}
+            {/* ADMIN ROUTES (Clean & Consistente) */}
             <Route path="/app" element={<AdminLayout />}>
               <Route index element={<Navigate to="dashboard" replace />} />
-              
-              {/* Novas Rotas do Menu (Visíveis) */}
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="operacao" element={<AdminOperacao />} />
-              <Route path="cargas" element={<Placeholder title="Gestão de Cargas" />} />
-              <Route path="produtores" element={<Placeholder title="Gestão de Produtores" />} />
               <Route path="usuarios" element={<AdminUsuarios />} />
-              <Route path="relatorios" element={<Placeholder title="Relatórios e Dashboards" />} />
               <Route path="configuracoes" element={<AdminConfiguracoes />} />
-
-              {/* Rotas Antigas (Mantidas internamente para não quebrar lógica, fora do menu) */}
-              <Route path="coleta" element={<Placeholder title="Gestão de Coletas" />} />
-              <Route path="beneficiamento" element={<Placeholder title="Gestão de Beneficiamento" />} />
-              <Route path="financeiro" element={<Placeholder title="Fechamento Financeiro" />} />
-              <Route path="pagamentos" element={<Placeholder title="Liberação de Pagamentos" />} />
-              <Route path="colaboradores" element={<Placeholder title="Gestão de Colaboradores (Antigo)" />} />
             </Route>
 
             {/* WORKSPACE (COLLABORATOR) ROUTES */}

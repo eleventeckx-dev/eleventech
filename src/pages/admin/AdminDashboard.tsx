@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAgro } from '../../contexts/AgroContext';
 import { 
   Truck, DollarSign, AlertTriangle, TrendingUp, Package, Users, 
-  Activity, UsersRound, LineChart, Settings, Zap 
+  Activity, UsersRound, Settings, Zap 
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -15,15 +15,11 @@ const AdminDashboard = () => {
   const totalPaid = loads.filter(l => l.status === 'pago').reduce((acc, l) => acc + (l.financial?.finalValue || 0), 0);
   const totalLost = loads.reduce((acc, l) => acc + (l.processing ? (l.processing.damage + l.processing.discard) : 0), 0);
 
-  // Quick Action Shortcuts
+  // Atalhos atualizados e coerentes com a nova estrutura de rotas
   const shortcuts = [
-    { name: 'Ir para Operação', path: '/app/operacao', icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-50', hover: 'hover:border-emerald-200 hover:shadow-emerald-500/10' },
-    { name: 'Nova Coleta', path: '/app/coleta', icon: Truck, color: 'text-blue-600', bg: 'bg-blue-50', hover: 'hover:border-blue-200 hover:shadow-blue-500/10' },
-    { name: 'Ver Cargas', path: '/app/cargas', icon: Package, color: 'text-amber-600', bg: 'bg-amber-50', hover: 'hover:border-amber-200 hover:shadow-amber-500/10' },
-    { name: 'Ver Produtores', path: '/app/produtores', icon: Users, color: 'text-purple-600', bg: 'bg-purple-50', hover: 'hover:border-purple-200 hover:shadow-purple-500/10' },
-    { name: 'Gerenciar Usuários', path: '/app/usuarios', icon: UsersRound, color: 'text-rose-600', bg: 'bg-rose-50', hover: 'hover:border-rose-200 hover:shadow-rose-500/10' },
-    { name: 'Ver Relatórios', path: '/app/relatorios', icon: LineChart, color: 'text-indigo-600', bg: 'bg-indigo-50', hover: 'hover:border-indigo-200 hover:shadow-indigo-500/10' },
-    { name: 'Configurações', path: '/app/configuracoes', icon: Settings, color: 'text-slate-600', bg: 'bg-slate-100', hover: 'hover:border-slate-300 hover:shadow-slate-500/10' },
+    { name: 'Central de Operações', path: '/app/operacao', icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-50', hover: 'hover:border-emerald-200 hover:shadow-emerald-500/10' },
+    { name: 'Gerenciar Usuários', path: '/app/usuarios', icon: UsersRound, color: 'text-blue-600', bg: 'bg-blue-50', hover: 'hover:border-blue-200 hover:shadow-blue-500/10' },
+    { name: 'Ajustes do Sistema', path: '/app/configuracoes', icon: Settings, color: 'text-slate-600', bg: 'bg-slate-100', hover: 'hover:border-slate-300 hover:shadow-slate-500/10' },
   ];
 
   return (
@@ -84,19 +80,19 @@ const AdminDashboard = () => {
         <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
           <Zap size={20} className="text-amber-500 fill-amber-500" /> Acesso Rápido
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl">
           {shortcuts.map((shortcut) => {
             const Icon = shortcut.icon;
             return (
               <Link 
                 key={shortcut.path} 
                 to={shortcut.path}
-                className={`flex flex-col items-center justify-center p-4 bg-white rounded-2xl border border-slate-200 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${shortcut.hover} group`}
+                className={`flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-slate-200 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${shortcut.hover} group`}
               >
-                <div className={`w-12 h-12 rounded-full ${shortcut.bg} ${shortcut.color} flex items-center justify-center mb-3 group-active:scale-95 transition-transform`}>
-                  <Icon size={24} />
+                <div className={`w-14 h-14 rounded-full ${shortcut.bg} ${shortcut.color} flex items-center justify-center mb-3 group-active:scale-95 transition-transform`}>
+                  <Icon size={28} />
                 </div>
-                <span className="text-sm font-semibold text-slate-700 text-center leading-tight">
+                <span className="text-base font-bold text-slate-700 text-center leading-tight">
                   {shortcut.name}
                 </span>
               </Link>
@@ -106,7 +102,7 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Loads Chart/List Placeholder */}
+        {/* Tabela Resumo Cargas (Apenas Leitura no Dashboard) */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
            <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Package size={20} className="text-emerald-600"/> Últimas Cargas Processadas</h3>
            <div className="overflow-x-auto">
@@ -147,7 +143,7 @@ const AdminDashboard = () => {
            </div>
         </div>
 
-        {/* Top Producers */}
+        {/* Tabela Resumo Produtores (Apenas Leitura no Dashboard) */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
            <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"><Users size={20} className="text-emerald-600"/> Produtores Ativos</h3>
            <div className="space-y-4">

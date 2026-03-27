@@ -1,19 +1,17 @@
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Activity, Package, Users, UsersRound, LineChart, Settings, LogOut, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Activity, UsersRound, Settings, LogOut, ChevronRight } from 'lucide-react';
 import { useAgro } from '../contexts/AgroContext';
 
 const AdminLayout = () => {
   const location = useLocation();
   const { currentUser, setCurrentUser } = useAgro();
 
+  // Menu enxuto e consistente com a nova estrutura
   const menu = [
     { name: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard },
     { name: 'Operação', path: '/app/operacao', icon: Activity },
-    { name: 'Cargas', path: '/app/cargas', icon: Package },
-    { name: 'Produtores', path: '/app/produtores', icon: Users },
     { name: 'Usuários', path: '/app/usuarios', icon: UsersRound },
-    { name: 'Relatórios', path: '/app/relatorios', icon: LineChart },
     { name: 'Configurações', path: '/app/configuracoes', icon: Settings },
   ];
 
