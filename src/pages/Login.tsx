@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAgro } from '../contexts/AgroContext';
 import { MOCK_USERS } from '../data/mock';
-import { ShieldCheck, LogIn, Mail, Lock } from 'lucide-react';
+import { ShieldCheck, LogIn, Mail, Lock, Crown, Building2, Truck, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Login = () => {
@@ -11,14 +11,10 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+  const performLogin = (targetEmail: string, targetPass: string) => {
+    const user = MOCK_USERS.find(u => u.email.toLowerCase() === targetEmail.toLowerCase());
     
-    // Simula a busca do usuário no mock de banco de dados
-    const user = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
-    
-    // Todos os usuários de teste usam a senha 123456
-    if (user && password === '123456') {
+    if (user && targetPass === '123456') {
       setCurrentUser(user);
       toast.success(`Bem-vindo, ${user.name}!`);
       
@@ -28,16 +24,27 @@ const Login = () => {
       } else if (user.role === 'admin') {
         navigate('/app/dashboard');
       } else if (user.role === 'collaborator') {
-        // Verifica a primeira permissão disponível para direcionar corretamente
         if (user.permissions?.canCollect) navigate('/user/coleta');
         else if (user.permissions?.canProcess) navigate('/user/beneficiamento');
         else if (user.permissions?.canManageFinancial) navigate('/user/financeiro');
-        else navigate('/user/perfil'); // Fallback de segurança
+        else navigate('/user/perfil'); 
       }
     } else {
       toast.error('E-mail ou senha incorretos.');
     }
   };
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    performLogin(email, password);
+  };
+
+  const quickAccess = [
+    { name: 'Super Admin', email: 'sadmin@agro.com', icon: Crown, color: 'text-purple-600', bg: 'bg-purple-50 hover:bg-purple-100 border-purple-200' },
+    { name: 'Gestor (Admin)', email: 'carlos@agrosul.com', icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 hover:bg-blue-100 border-blue-200' },
+    { name: 'App Coleta', email: 'joao@agrosul.com', icon: Truck, color: 'text-emerald-600', bg: 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200' },
+    { name: 'App Financeiro', email: 'maria@agrosul.com', icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-50 hover:bg-amber-100 border-amber-200' },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
@@ -94,14 +101,29 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="mt-8 p-4 bg-blue-50 border border-blue-100 rounded-xl">
-          <p className="text-xs text-blue-800 font-semibold uppercase mb-2">Contas de Teste (Senha: 123456)</p>
-          <ul className="text-sm text-blue-700 space-y-1">
-            <li><span className="font-bold">Super Admin:</span> sadmin@agro.com</li>
-            <li><span className="font-bold">Admin Empresa:</span> carlos@agrosul.com</li>
-            <li><span className="font-bold">App Coleta:</span> joao@agrosul.com</li>
-            <li><span className="font-bold">App Financeiro:</span> maria@agrosul.com</li>
-          </ul>
+        <div className="mt-8">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="h-px bg-slate-200 flex-1"></div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Acesso Rápido (Testes)</span>
+            <div className="h-px bg-slate-200 flex-1"></div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            {quickAccess.map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => performLogin(item.email, '123456')}
+                  type="button"
+                  className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all active:scale-95 ${item.bg}`}
+                >
+                  <Icon size={20} className={`mb-1.5 ${item.color}`} />
+                  <span className="text-xs font-bold text-slate-700">{item.name}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
 
       </div>
