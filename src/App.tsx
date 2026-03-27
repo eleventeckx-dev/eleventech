@@ -16,6 +16,7 @@ import UserLayout from "./layouts/UserLayout";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOperacao from "./pages/admin/AdminOperacao";
+import AdminProdutores from "./pages/admin/AdminProdutores";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
 import { SADashboard, SACompanies } from "./pages/super-admin/SuperAdminPages";
@@ -52,16 +53,15 @@ const App = () => (
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="operacao" element={<AdminOperacao />} />
+              <Route path="produtores" element={<AdminProdutores />} />
               <Route path="usuarios" element={<AdminUsuarios />} />
               <Route path="configuracoes" element={<AdminConfiguracoes />} />
             </Route>
 
             {/* USER (COLLABORATOR) ROUTES - Mobile App */}
             <Route path="/user" element={<UserLayout />}>
-              {/* Agora usa o redirecionamento inteligente que criamos */}
               <Route index element={<UserIndexRedirect />} />
               
-              {/* As únicas 4 etapas permitidas no App */}
               <Route path="coleta" element={<UserColeta />} />
               <Route path="beneficiamento" element={<UserBeneficiamento />} />
               <Route path="financeiro" element={<UserFinanceiro />} />

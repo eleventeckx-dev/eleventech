@@ -12,6 +12,8 @@ interface AgroContextData {
   addLoad: (load: Load) => void;
   updateLoad: (id: string, load: Partial<Load>) => void;
   addProducer: (producer: Producer) => void;
+  updateProducer: (id: string, producer: Partial<Producer>) => void;
+  deleteProducer: (id: string) => void;
   addCompany: (company: Company) => void;
   updateCompany: (id: string, company: Partial<Company>) => void;
   addUser: (user: User) => void;
@@ -36,7 +38,15 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoads(loads.map(l => l.id === id ? { ...l, ...updates, updatedAt: new Date().toISOString() } : l));
   };
 
-  const addProducer = (producer: Producer) => setProducers([...producers, producer]);
+  const addProducer = (producer: Producer) => setProducers([producer, ...producers]);
+  
+  const updateProducer = (id: string, updates: Partial<Producer>) => {
+    setProducers(producers.map(p => p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p));
+  };
+
+  const deleteProducer = (id: string) => {
+    setProducers(producers.filter(p => p.id !== id));
+  };
 
   const addCompany = (company: Company) => setCompanies([company, ...companies]);
   
@@ -58,7 +68,8 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AgroContext.Provider value={{ 
       currentUser, setCurrentUser, 
       loads, producers, companies, users,
-      addLoad, updateLoad, addProducer, 
+      addLoad, updateLoad, 
+      addProducer, updateProducer, deleteProducer,
       addCompany, updateCompany,
       addUser, updateUser, deleteUser
     }}>
