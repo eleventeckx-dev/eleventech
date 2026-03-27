@@ -1,61 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAgro } from '../../contexts/AgroContext';
-import { Camera, Upload, CheckCircle2, ChevronRight, Truck, Factory, DollarSign } from 'lucide-react';
-
-// ---- HOME WORKSPACE ----
-export const WorkspaceHome = () => {
-  const { currentUser, loads } = useAgro();
-  const myLoads = loads.filter(l => l.collection.responsibleId === currentUser?.id);
-  const pendingProcessing = loads.filter(l => l.status === 'coletado').length;
-
-  return (
-    <div className="p-4 space-y-6">
-      <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl p-6 text-white shadow-lg">
-        <h2 className="text-2xl font-bold mb-1">Olá, {currentUser?.name.split(' ')[0]}!</h2>
-        <p className="text-emerald-100 opacity-90 mb-4">Pronto para mais um dia de campo?</p>
-        <div className="flex bg-black/20 rounded-xl p-4 divide-x divide-emerald-500/30">
-          <div className="flex-1 text-center">
-            <p className="text-3xl font-bold">{myLoads.length}</p>
-            <p className="text-xs text-emerald-100 uppercase mt-1">Minhas Coletas</p>
-          </div>
-          <div className="flex-1 text-center">
-            <p className="text-3xl font-bold">{pendingProcessing}</p>
-            <p className="text-xs text-emerald-100 uppercase mt-1">A Beneficiar</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <h3 className="font-semibold text-gray-800 px-1">Acesso Rápido</h3>
-        {currentUser?.permissions?.canCollect && (
-          <button onClick={() => window.location.href='/workspace/coleta'} className="w-full bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 active:scale-95 transition-transform">
-            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
-              <Truck size={24} />
-            </div>
-            <div className="flex-1 text-left">
-              <h4 className="font-bold text-gray-800">Nova Coleta</h4>
-              <p className="text-sm text-gray-500">Registrar carga na roça</p>
-            </div>
-            <ChevronRight className="text-gray-300" />
-          </button>
-        )}
-        {currentUser?.permissions?.canProcess && (
-          <button onClick={() => window.location.href='/workspace/beneficiamento'} className="w-full bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 active:scale-95 transition-transform">
-            <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-              <Factory size={24} />
-            </div>
-            <div className="flex-1 text-left">
-              <h4 className="font-bold text-gray-800">Beneficiamento</h4>
-              <p className="text-sm text-gray-500">Recebimento no barracão</p>
-            </div>
-            <ChevronRight className="text-gray-300" />
-          </button>
-        )}
-      </div>
-    </div>
-  );
-};
+import { Camera, CheckCircle2, ChevronRight, Factory, User, LogOut, DollarSign, ShieldAlert } from 'lucide-react';
 
 // ---- COLETA (PASSO 1) ----
 export const WorkspaceColeta = () => {
@@ -86,13 +32,23 @@ export const WorkspaceColeta = () => {
     };
     addLoad(newLoad);
     alert('Coleta registrada com sucesso!');
-    navigate('/workspace/home');
+    navigate('/workspace/beneficiamento');
   };
+
+  if (!currentUser?.permissions?.canCollect) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center h-full text-center mt-20">
+        <ShieldAlert size={48} className="text-gray-300 mb-4" />
+        <h3 className="text-lg font-bold text-gray-800">Sem Permissão</h3>
+        <p className="text-gray-500 text-sm mt-2">Você não possui acesso a esta etapa.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 pb-20">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Nova Coleta</h2>
+        <h2 className="text-2xl font-bold text-gray-800">1. Coleta</h2>
         <p className="text-gray-500 text-sm">Registro de carga na roça</p>
       </div>
       
@@ -141,7 +97,7 @@ export const WorkspaceColeta = () => {
             <Camera size={24} />
           </div>
           <span className="font-medium text-gray-700">Tirar Foto da Carga</span>
-          <span className="text-xs text-gray-400">Obrigatório 2 fotos</span>
+          <span className="text-xs text-gray-400">Opcional para esta etapa</span>
         </div>
 
         <button type="submit" className="w-full bg-emerald-600 text-white font-bold text-lg py-4 rounded-2xl shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2 mt-4">
@@ -154,7 +110,7 @@ export const WorkspaceColeta = () => {
 
 // ---- BENEFICIAMENTO (PASSO 2) ----
 export const WorkspaceBeneficiamento = () => {
-  const { loads, producers, updateLoad } = useAgro();
+  const { loads, producers, updateLoad, currentUser } = useAgro();
   const navigate = useNavigate();
   const pendingLoads = loads.filter(l => l.status === 'coletado');
   
@@ -187,21 +143,36 @@ export const WorkspaceBeneficiamento = () => {
       }
     });
     alert('Beneficiamento concluído!');
-    navigate('/workspace/home');
+    navigate('/workspace/financeiro');
   };
 
-  if (pendingLoads.length === 0) return <div className="p-8 text-center text-gray-500 mt-20"><Factory size={48} className="mx-auto text-gray-300 mb-4"/> Nenhuma carga aguardando beneficiamento.</div>;
+  if (!currentUser?.permissions?.canProcess) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center h-full text-center mt-20">
+        <ShieldAlert size={48} className="text-gray-300 mb-4" />
+        <h3 className="text-lg font-bold text-gray-800">Sem Permissão</h3>
+        <p className="text-gray-500 text-sm mt-2">Você não possui acesso a esta etapa.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 pb-20">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Beneficiamento</h2>
+        <h2 className="text-2xl font-bold text-gray-800">2. Beneficiamento</h2>
         <p className="text-gray-500 text-sm">Processamento no barracão</p>
       </div>
 
-      {!selectedLoadId ? (
+      {pendingLoads.length === 0 && !selectedLoadId && (
+        <div className="p-8 text-center text-gray-500 mt-10 bg-white rounded-2xl border border-gray-100 border-dashed">
+          <Factory size={48} className="mx-auto text-gray-300 mb-4"/>
+          <p>Nenhuma carga aguardando beneficiamento no momento.</p>
+        </div>
+      )}
+
+      {!selectedLoadId && pendingLoads.length > 0 && (
         <div className="space-y-4">
-          <h3 className="font-semibold text-gray-700">Selecione uma carga:</h3>
+          <h3 className="font-semibold text-gray-700">Cargas aguardando:</h3>
           {pendingLoads.map(load => {
             const prod = producers.find(p => p.id === load.producerId);
             return (
@@ -209,14 +180,16 @@ export const WorkspaceBeneficiamento = () => {
                 <div>
                   <p className="font-bold text-gray-800">{prod?.name}</p>
                   <p className="text-sm text-gray-500">{load.collection.type} - {load.collection.boxes} caixas</p>
-                  <p className="text-xs text-emerald-600 font-medium mt-1">Peso Roça: {load.collection.grossWeight}kg</p>
+                  <p className="text-xs text-emerald-600 font-medium mt-1">Peso Coleta: {load.collection.grossWeight}kg</p>
                 </div>
                 <ChevronRight className="text-gray-300" />
               </div>
             );
           })}
         </div>
-      ) : (
+      )}
+
+      {selectedLoadId && selectedLoad && (
         <form onSubmit={handleSubmit} className="space-y-5 animate-in slide-in-from-right-8">
            <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl flex justify-between items-center">
              <div>
@@ -224,7 +197,7 @@ export const WorkspaceBeneficiamento = () => {
                <p className="font-medium text-emerald-900">{producers.find(p => p.id === selectedLoad.producerId)?.name}</p>
                <p className="text-sm text-emerald-700">Roça: {selectedLoad.collection.grossWeight} kg</p>
              </div>
-             <button type="button" onClick={() => setSelectedLoadId('')} className="text-emerald-700 text-sm underline">Trocar</button>
+             <button type="button" onClick={() => setSelectedLoadId('')} className="text-emerald-700 text-sm font-bold underline">Trocar</button>
            </div>
 
            <div className="space-y-1">
@@ -243,7 +216,6 @@ export const WorkspaceBeneficiamento = () => {
              </div>
            </div>
 
-           {/* Preview Calculado */}
            <div className="bg-gray-800 text-white p-4 rounded-xl mt-4">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-gray-400 text-sm">Peso Líquido Calculado:</span>
@@ -262,6 +234,80 @@ export const WorkspaceBeneficiamento = () => {
   );
 };
 
-// ---- FINANCEIRO & PAGAMENTOS PLACEHOLDERS (mesma lógica) ----
-// Para manter o tamanho do código, os fluxos Financeiro e Pagamentos no Mobile 
-// seguem a mesma estrutura de lista -> seleciona -> processa.
+// ---- FINANCEIRO (PASSO 3) ----
+export const WorkspaceFinanceiro = () => {
+  const { currentUser } = useAgro();
+
+  if (!currentUser?.permissions?.canManageFinancial) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center h-full text-center mt-20">
+        <ShieldAlert size={48} className="text-gray-300 mb-4" />
+        <h3 className="text-lg font-bold text-gray-800">Sem Permissão</h3>
+        <p className="text-gray-500 text-sm mt-2">Você não possui acesso a esta etapa.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 pb-20">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">3. Financeiro</h2>
+        <p className="text-gray-500 text-sm">Cálculos e fechamentos de pagamentos</p>
+      </div>
+      
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center text-slate-400 mt-10">
+        <DollarSign size={48} className="text-slate-300 mb-4" />
+        <p className="font-medium text-slate-600">Interface de Fechamento Financeiro</p>
+        <p className="text-sm mt-2">Nesta etapa, o usuário com permissão lançará os valores da carga já beneficiada.</p>
+      </div>
+    </div>
+  );
+};
+
+// ---- PERFIL DO USUÁRIO (PASSO 4) ----
+export const WorkspacePerfil = () => {
+  const { currentUser, setCurrentUser } = useAgro();
+
+  return (
+    <div className="p-4 pb-20">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">Meu Perfil</h2>
+        <p className="text-gray-500 text-sm">Sua conta e permissões</p>
+      </div>
+
+      <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 text-center mb-6">
+        <div className="w-20 h-20 bg-emerald-100 text-emerald-700 font-bold text-2xl flex items-center justify-center rounded-full mx-auto mb-4 border-4 border-white shadow-md">
+          {currentUser?.name.charAt(0)}
+        </div>
+        <h3 className="text-xl font-bold text-gray-800">{currentUser?.name}</h3>
+        <p className="text-gray-500">{currentUser?.email}</p>
+        <div className="mt-3 inline-block px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold uppercase tracking-wider">
+          Colaborador Operacional
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6 space-y-3">
+        <h4 className="font-bold text-gray-800 mb-2 flex items-center gap-2"><ShieldAlert size={18} className="text-emerald-500"/> Suas Permissões</h4>
+        <div className="flex justify-between items-center py-2 border-b border-gray-50">
+          <span className="text-sm text-gray-600">1. Coleta na Roça</span>
+          {currentUser?.permissions?.canCollect ? <CheckCircle2 size={18} className="text-emerald-500"/> : <span className="text-gray-300 text-xs">Sem acesso</span>}
+        </div>
+        <div className="flex justify-between items-center py-2 border-b border-gray-50">
+          <span className="text-sm text-gray-600">2. Beneficiamento</span>
+          {currentUser?.permissions?.canProcess ? <CheckCircle2 size={18} className="text-emerald-500"/> : <span className="text-gray-300 text-xs">Sem acesso</span>}
+        </div>
+        <div className="flex justify-between items-center py-2">
+          <span className="text-sm text-gray-600">3. Lançamento Financeiro</span>
+          {currentUser?.permissions?.canManageFinancial ? <CheckCircle2 size={18} className="text-emerald-500"/> : <span className="text-gray-300 text-xs">Sem acesso</span>}
+        </div>
+      </div>
+
+      <button 
+        onClick={() => setCurrentUser(null)} 
+        className="w-full bg-red-50 text-red-600 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-red-100 active:scale-95 transition"
+      >
+        <LogOut size={20} /> Sair da Conta
+      </button>
+    </div>
+  );
+};

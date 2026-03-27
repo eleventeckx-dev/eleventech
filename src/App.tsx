@@ -14,17 +14,22 @@ import WorkspaceLayout from "./layouts/WorkspaceLayout";
 
 // Pages
 import Login from "./pages/Login";
-import { WorkspaceHome, WorkspaceColeta, WorkspaceBeneficiamento } from "./pages/workspace/WorkspacePages";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOperacao from "./pages/admin/AdminOperacao";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
 import { SADashboard, SACompanies } from "./pages/super-admin/SuperAdminPages";
 import NotFound from "./pages/NotFound";
+import { 
+  WorkspaceColeta, 
+  WorkspaceBeneficiamento, 
+  WorkspaceFinanceiro, 
+  WorkspacePerfil 
+} from "./pages/workspace/WorkspacePages";
 
 const queryClient = new QueryClient();
 
-// Placeholder apenas para as rotas móveis que ainda estão em desenvolvimento
+// Placeholders minimalistas para as rotas
 const Placeholder = ({ title }: { title: string }) => (
   <div className="flex flex-col items-center justify-center h-full text-slate-400">
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center">
@@ -51,7 +56,7 @@ const App = () => (
               <Route path="companies" element={<SACompanies />} />
             </Route>
 
-            {/* ADMIN ROUTES (Clean & Consistente) */}
+            {/* ADMIN ROUTES */}
             <Route path="/app" element={<AdminLayout />}>
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
@@ -60,15 +65,16 @@ const App = () => (
               <Route path="configuracoes" element={<AdminConfiguracoes />} />
             </Route>
 
-            {/* WORKSPACE (COLLABORATOR) ROUTES */}
+            {/* WORKSPACE (COLLABORATOR) ROUTES - App Mobile */}
             <Route path="/workspace" element={<WorkspaceLayout />}>
-              <Route index element={<Navigate to="home" replace />} />
-              <Route path="home" element={<WorkspaceHome />} />
+              {/* Rota raiz redireciona diretamente para o Passo 1 do fluxo */}
+              <Route index element={<Navigate to="coleta" replace />} />
+              
+              {/* As únicas 4 etapas permitidas no App */}
               <Route path="coleta" element={<WorkspaceColeta />} />
               <Route path="beneficiamento" element={<WorkspaceBeneficiamento />} />
-              <Route path="financeiro" element={<Placeholder title="App Financeiro" />} />
-              <Route path="pagamentos" element={<Placeholder title="App Pagamentos" />} />
-              <Route path="minhas-cargas" element={<Placeholder title="Minhas Cargas Realizadas" />} />
+              <Route path="financeiro" element={<WorkspaceFinanceiro />} />
+              <Route path="perfil" element={<WorkspacePerfil />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
