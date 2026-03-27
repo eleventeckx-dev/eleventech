@@ -4,7 +4,7 @@ import { useAgro } from '../../contexts/AgroContext';
 import { 
   CheckCircle2, ChevronRight, Factory, User, LogOut, DollarSign, 
   ShieldAlert, ImagePlus, X, Calendar, Clock, Plus, Truck, Scale, AlertTriangle, ArrowRight, Receipt, Lock,
-  Camera
+  Camera, Package
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -72,7 +72,7 @@ const FloatingLabelInput = ({ label, type = "text", value, onChange, icon: Icon,
 
 // ---- COLETA (PASSO 1) ----
 export const UserColeta = () => {
-  const { producers, currentUser, loads, addLoad } = useAgro();
+  const { producers, products, currentUser, loads, addLoad } = useAgro();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [photos, setPhotos] = useState<{file: File, preview: string}[]>([]);
@@ -198,6 +198,7 @@ export const UserColeta = () => {
           visibleLoads.map(load => {
             const prod = producers.find(p => p.id === load.producerId);
             const isMyLoad = load.collection.responsibleId === currentUser?.id;
+            const product = products.find(p => p.name.toLowerCase() === load.collection.type.toLowerCase());
 
             return (
               <PremiumCard 
@@ -221,8 +222,12 @@ export const UserColeta = () => {
 
                 <div className="bg-slate-50/50 rounded-2xl p-4 flex justify-between items-center mb-4 border border-slate-100">
                   <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 bg-white text-slate-700 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm border border-slate-100">
-                       {load.collection.type.charAt(0)}
+                     <div className="w-12 h-12 bg-white text-slate-700 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm border border-slate-100 overflow-hidden shrink-0">
+                       {product?.imageUrl ? (
+                         <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                       ) : (
+                         <Package size={20} className="text-slate-300" />
+                       )}
                      </div>
                      <div>
                        <p className="text-sm font-bold text-slate-700">{load.collection.type}</p>
@@ -402,7 +407,7 @@ export const UserColeta = () => {
 
 // ---- BENEFICIAMENTO (PASSO 2) ----
 export const UserBeneficiamento = () => {
-  const { loads, producers, updateLoad, currentUser } = useAgro();
+  const { loads, producers, products, updateLoad, currentUser } = useAgro();
   
   const pendingLoads = loads.filter(l => l.companyId === currentUser?.companyId && l.status === 'coletado');
   const [selectedLoadId, setSelectedLoadId] = useState('');
@@ -411,6 +416,9 @@ export const UserBeneficiamento = () => {
 
   const hasPermission = currentUser?.permissions?.canProcess;
   const selectedLoad = pendingLoads.find(l => l.id === selectedLoadId);
+
+  // Informações extras do produto focado
+  const selectedProduct = selectedLoad ? products.find(p => p.name.toLowerCase() === selectedLoad.collection.type.toLowerCase()) : null;
 
   const fieldWeight = selectedLoad?.collection.grossWeight || 0;
   const received = Number(form.receivedWeight) || 0;
@@ -465,22 +473,33 @@ export const UserBeneficiamento = () => {
         <div className="space-y-4">
           {pendingLoads.map(load => {
             const prod = producers.find(p => p.id === load.producerId);
+            const product = products.find(p => p.name.toLowerCase() === load.collection.type.toLowerCase());
+            
             return (
               <PremiumCard 
                 key={load.id} 
                 onClick={() => hasPermission && setSelectedLoadId(load.id)} 
                 className={`flex items-center justify-between group border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] ${!hasPermission ? 'opacity-70' : 'hover:border-blue-200'}`}
               >
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 mb-1 tracking-widest uppercase">Aguardando Peso</p>
-                  <p className="text-lg font-bold text-slate-800 leading-tight">{prod?.name}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                     <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-lg text-[11px] font-bold">{load.collection.type}</span>
-                     <span className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">Roça: {load.collection.grossWeight} kg</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-slate-50 text-slate-700 rounded-xl flex items-center justify-center overflow-hidden border border-slate-100 shrink-0 shadow-inner">
+                    {product?.imageUrl ? (
+                      <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <Package size={20} className="text-slate-300" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 mb-0.5 tracking-widest uppercase">Aguardando Peso</p>
+                    <p className="text-lg font-bold text-slate-800 leading-tight">{prod?.name}</p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                       <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg text-[10px] font-bold">{load.collection.type}</span>
+                       <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg">Roça: {load.collection.grossWeight} kg</span>
+                    </div>
                   </div>
                 </div>
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${hasPermission ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white group-active:scale-95' : 'bg-slate-50 text-slate-400'}`}>
-                  {hasPermission ? <ArrowRight size={20} strokeWidth={2.5} /> : <Lock size={18} />}
+                <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center transition-all ${hasPermission ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white group-active:scale-95' : 'bg-slate-50 text-slate-400'}`}>
+                  {hasPermission ? <ArrowRight size={18} strokeWidth={2.5} /> : <Lock size={16} />}
                 </div>
               </PremiumCard>
             );
@@ -504,14 +523,26 @@ export const UserBeneficiamento = () => {
                 <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
                 <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mb-1">Carga de Origem</p>
                 <h3 className="font-black text-2xl mb-4">{producers.find(p => p.id === selectedLoad.producerId)?.name}</h3>
+                
                 <div className="flex justify-between items-end border-t border-white/20 pt-4">
-                   <div>
-                     <p className="text-blue-200 text-xs font-medium mb-1">{selectedLoad.collection.type}</p>
-                     <p className="font-bold">{selectedLoad.collection.boxes} Caixas</p>
+                   <div className="flex items-center gap-3">
+                     {selectedProduct?.imageUrl ? (
+                        <div className="w-10 h-10 rounded-lg overflow-hidden border-2 border-white/30 shrink-0">
+                          <img src={selectedProduct.imageUrl} alt={selectedProduct.name} className="w-full h-full object-cover" />
+                        </div>
+                     ) : (
+                        <div className="w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
+                          <Package size={18} className="text-blue-200" />
+                        </div>
+                     )}
+                     <div>
+                       <p className="text-blue-200 text-xs font-medium mb-0.5 leading-none">{selectedLoad.collection.type}</p>
+                       <p className="font-bold text-sm leading-none">{selectedLoad.collection.boxes} Caixas</p>
+                     </div>
                    </div>
                    <div className="text-right">
                      <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mb-1">Peso Roça</p>
-                     <p className="font-black text-2xl">{fieldWeight} <span className="text-sm font-medium">kg</span></p>
+                     <p className="font-black text-2xl leading-none">{fieldWeight} <span className="text-xs font-medium">kg</span></p>
                    </div>
                 </div>
               </div>
@@ -589,7 +620,7 @@ export const UserBeneficiamento = () => {
 
 // ---- FINANCEIRO (PASSO 3) ----
 export const UserFinanceiro = () => {
-  const { loads, producers, updateLoad, currentUser } = useAgro();
+  const { loads, producers, products, updateLoad, currentUser } = useAgro();
   
   const pendingLoads = loads.filter(l => l.companyId === currentUser?.companyId && l.status === 'beneficiado');
   const [selectedLoadId, setSelectedLoadId] = useState('');
@@ -597,6 +628,9 @@ export const UserFinanceiro = () => {
 
   const hasPermission = currentUser?.permissions?.canManageFinancial;
   const selectedLoad = pendingLoads.find(l => l.id === selectedLoadId);
+
+  // Produto para o Modal
+  const selectedProduct = selectedLoad ? products.find(p => p.name.toLowerCase() === selectedLoad.collection.type.toLowerCase()) : null;
 
   const netWeight = selectedLoad?.processing?.netWeight || 0;
   const price = Number(form.pricePerKg) || 0;
@@ -632,22 +666,33 @@ export const UserFinanceiro = () => {
         <div className="space-y-4">
           {pendingLoads.map(load => {
             const prod = producers.find(p => p.id === load.producerId);
+            const product = products.find(p => p.name.toLowerCase() === load.collection.type.toLowerCase());
+            
             return (
               <PremiumCard 
                 key={load.id} 
                 onClick={() => hasPermission && setSelectedLoadId(load.id)} 
                 className={`flex items-center justify-between group border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] ${!hasPermission ? 'opacity-70' : 'hover:border-slate-800'}`}
               >
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 mb-1 tracking-widest uppercase">Pendente</p>
-                  <p className="text-lg font-bold text-slate-800 leading-tight">{prod?.name}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                     <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-lg text-[11px] font-bold">{load.collection.type}</span>
-                     <span className="text-xs font-black text-slate-800 bg-slate-100 px-2 py-1 rounded-lg">Líquido: {load.processing?.netWeight} kg</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-slate-50 text-slate-700 rounded-xl flex items-center justify-center overflow-hidden border border-slate-100 shrink-0 shadow-inner">
+                    {product?.imageUrl ? (
+                      <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <Package size={20} className="text-slate-300" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 mb-0.5 tracking-widest uppercase">Pendente</p>
+                    <p className="text-lg font-bold text-slate-800 leading-tight">{prod?.name}</p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                       <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg text-[10px] font-bold">{load.collection.type}</span>
+                       <span className="text-[10px] font-black text-slate-800 bg-slate-100 px-2 py-0.5 rounded-lg">Líquido: {load.processing?.netWeight} kg</span>
+                    </div>
                   </div>
                 </div>
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${hasPermission ? 'bg-slate-900 text-white shadow-md group-active:scale-95' : 'bg-slate-50 text-slate-400'}`}>
-                  {hasPermission ? <ArrowRight size={20} strokeWidth={2.5} /> : <Lock size={18} />}
+                <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center transition-all ${hasPermission ? 'bg-slate-900 text-white shadow-md group-active:scale-95' : 'bg-slate-50 text-slate-400'}`}>
+                  {hasPermission ? <ArrowRight size={18} strokeWidth={2.5} /> : <Lock size={16} />}
                 </div>
               </PremiumCard>
             );
@@ -670,8 +715,20 @@ export const UserFinanceiro = () => {
               <div className="bg-slate-50 rounded-[2rem] p-6 mb-8 border border-slate-100">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Carga Beneficiada</p>
                 <h3 className="font-black text-2xl text-slate-800 mb-4">{producers.find(p => p.id === selectedLoad.producerId)?.name}</h3>
+                
                 <div className="flex justify-between items-center pt-4 border-t border-slate-200">
-                   <div className="text-sm font-bold text-slate-600">{selectedLoad.collection.type}</div>
+                   <div className="flex items-center gap-2.5">
+                     {selectedProduct?.imageUrl ? (
+                        <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 shrink-0">
+                          <img src={selectedProduct.imageUrl} alt={selectedProduct.name} className="w-full h-full object-cover" />
+                        </div>
+                     ) : (
+                        <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center shrink-0">
+                          <Package size={14} className="text-slate-400" />
+                        </div>
+                     )}
+                     <span className="text-sm font-bold text-slate-600">{selectedLoad.collection.type}</span>
+                   </div>
                    <div className="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-slate-100 font-black text-slate-800">
                      {netWeight} kg
                    </div>
