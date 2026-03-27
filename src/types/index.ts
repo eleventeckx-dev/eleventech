@@ -62,6 +62,7 @@ export type CollectionRecord = {
   type: string;
   boxes: number;
   grossWeight: number; // Peso bruto (kg)
+  loaderName?: string; // Novo: Nome do carregador
   responsibleId: string;
   observations?: string;
   photos: PhotoEvidence[];

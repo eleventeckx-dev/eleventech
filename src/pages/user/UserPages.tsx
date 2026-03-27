@@ -1,37 +1,89 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAgro } from '../../contexts/AgroContext';
-import { Camera, CheckCircle2, ChevronRight, Factory, User, LogOut, DollarSign, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Factory, User, LogOut, DollarSign, ShieldAlert, ImagePlus, X, Calendar, Clock } from 'lucide-react';
+import { toast } from 'sonner';
 
 // ---- COLETA (PASSO 1) ----
 export const UserColeta = () => {
   const { producers, currentUser, addLoad } = useAgro();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ producerId: '', location: '', category: 'Frutas', type: '', boxes: '', grossWeight: '' });
+  
+  const [form, setForm] = useState({ 
+    producerId: '', 
+    location: '', 
+    category: 'Frutas', 
+    type: '', 
+    boxes: '', 
+    grossWeight: '',
+    loaderName: '',
+    observations: ''
+  });
+
+  const [photos, setPhotos] = useState<{file: File, preview: string}[]>([]);
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+
+  // Atualiza o relógio na tela (apenas visual, data real é pega no submit)
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentDateTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newPhotos = Array.from(e.target.files).map(file => ({
+        file,
+        preview: URL.createObjectURL(file) // Cria URL local para preview imediato
+      }));
+      setPhotos(prev => [...prev, ...newPhotos]);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos(prev => {
+      const newArr = [...prev];
+      URL.revokeObjectURL(newArr[index].preview); // Libera memória
+      newArr.splice(index, 1);
+      return newArr;
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Simulação do upload criando objetos PhotoEvidence
+    const photosEvidence = photos.map((p, i) => ({
+      id: `photo_${Date.now()}_${i}`,
+      url: p.preview,
+      type: 'collection' as const
+    }));
+
+    const nowIso = new Date().toISOString();
+
     const newLoad = {
       id: `load_${Date.now()}`,
       companyId: currentUser?.companyId || '',
       producerId: form.producerId,
       status: 'coletado' as const,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: nowIso,
+      updatedAt: nowIso,
       collection: {
         id: `col_${Date.now()}`,
-        date: new Date().toISOString(),
+        date: nowIso,
         location: form.location,
         category: form.category,
         type: form.type,
         boxes: Number(form.boxes),
         grossWeight: Number(form.grossWeight),
+        loaderName: form.loaderName,
+        observations: form.observations,
         responsibleId: currentUser?.id || '',
-        photos: []
+        photos: photosEvidence
       }
     };
+    
     addLoad(newLoad);
-    alert('Coleta registrada com sucesso!');
+    toast.success('Carga registrada e sincronizada com sucesso!');
     navigate('/user/beneficiamento');
   };
 
@@ -46,62 +98,130 @@ export const UserColeta = () => {
   }
 
   return (
-    <div className="p-4 pb-20">
+    <div className="p-4 pb-24">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">1. Coleta</h2>
-        <p className="text-gray-500 text-sm">Registro de carga na roça</p>
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Nova Coleta</h2>
+        <p className="text-gray-500 text-sm">Registro rápido na propriedade</p>
       </div>
       
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700 ml-1">Produtor</label>
-          <select required className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition" value={form.producerId} onChange={e => setForm({...form, producerId: e.target.value})}>
-            <option value="">Selecione o produtor</option>
-            {producers.map(p => <option key={p.id} value={p.id}>{p.name} - {p.property}</option>)}
-          </select>
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        
+        {/* Bloco 1: Origem */}
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+          <div className="flex items-center gap-2 mb-2 border-b border-gray-50 pb-3">
+             <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">1</div>
+             <h3 className="font-bold text-gray-800">Origem & Data</h3>
+          </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700 ml-1">Local da Coleta</label>
-          <input required type="text" placeholder="Ex: Talhão 4" className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" value={form.location} onChange={e => setForm({...form, location: e.target.value})} />
-        </div>
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-gray-50 rounded-2xl p-3 flex flex-col justify-center border border-gray-100">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1 mb-1"><Calendar size={12}/> Data auto</span>
+              <span className="font-bold text-gray-700">{currentDateTime.toLocaleDateString('pt-BR')}</span>
+            </div>
+            <div className="bg-gray-50 rounded-2xl p-3 flex flex-col justify-center border border-gray-100">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1 mb-1"><Clock size={12}/> Hora auto</span>
+              <span className="font-bold text-gray-700">{currentDateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+          </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700 ml-1">Categoria</label>
-            <select className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
-              <option>Frutas</option>
-              <option>Vegetais</option>
-              <option>Grãos</option>
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold text-gray-700 ml-1">Produtor Rural</label>
+            <select required className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-gray-800 font-medium appearance-none" value={form.producerId} onChange={e => setForm({...form, producerId: e.target.value})}>
+              <option value="">Selecione o produtor...</option>
+              {producers.map(p => <option key={p.id} value={p.id}>{p.name} - {p.property}</option>)}
             </select>
           </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700 ml-1">Variedade</label>
-            <input required type="text" placeholder="Ex: Manga" className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" value={form.type} onChange={e => setForm({...form, type: e.target.value})} />
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold text-gray-700 ml-1">Local Exato da Coleta</label>
+            <input required type="text" placeholder="Ex: Talhão 4, Gleba B..." className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-gray-800 font-medium" value={form.location} onChange={e => setForm({...form, location: e.target.value})} />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700 ml-1">Qtd. Caixas</label>
-            <input required type="number" placeholder="0" className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 text-lg font-bold" value={form.boxes} onChange={e => setForm({...form, boxes: e.target.value})} />
+        {/* Bloco 2: Produto e Carga */}
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+          <div className="flex items-center gap-2 mb-2 border-b border-gray-50 pb-3">
+             <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">2</div>
+             <h3 className="font-bold text-gray-800">Carga</h3>
           </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700 ml-1">Peso Bruto (kg)</label>
-            <input required type="number" placeholder="0.00" className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 text-lg font-bold" value={form.grossWeight} onChange={e => setForm({...form, grossWeight: e.target.value})} />
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold text-gray-700 ml-1">Produto / Variedade</label>
+            <input required type="text" placeholder="Ex: Manga Palmer" className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-gray-800 font-medium text-lg" value={form.type} onChange={e => setForm({...form, type: e.target.value})} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-gray-700 ml-1">Qtd. Caixas</label>
+              <input required type="number" placeholder="0" className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-gray-900 font-black text-xl text-center" value={form.boxes} onChange={e => setForm({...form, boxes: e.target.value})} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-gray-700 ml-1">Peso Bruto (kg)</label>
+              <input required type="number" step="0.01" placeholder="0.00" className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-emerald-700 font-black text-xl text-center" value={form.grossWeight} onChange={e => setForm({...form, grossWeight: e.target.value})} />
+            </div>
           </div>
         </div>
 
-        <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-gray-100 transition">
-          <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center text-emerald-600 mb-2">
-            <Camera size={24} />
+        {/* Bloco 3: Equipe e Observações */}
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+          <div className="flex items-center gap-2 mb-2 border-b border-gray-50 pb-3">
+             <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">3</div>
+             <h3 className="font-bold text-gray-800">Equipe & Notas</h3>
           </div>
-          <span className="font-medium text-gray-700">Tirar Foto da Carga</span>
-          <span className="text-xs text-gray-400">Opcional para esta etapa</span>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold text-gray-700 ml-1">Nome do Carregador (Motorista)</label>
+            <input required type="text" placeholder="Nome de quem vai transportar" className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-gray-800 font-medium" value={form.loaderName} onChange={e => setForm({...form, loaderName: e.target.value})} />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold text-gray-700 ml-1">Observações (Opcional)</label>
+            <textarea placeholder="Alguma observação sobre a qualidade, acesso à roça..." rows={3} className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-gray-800 font-medium resize-none" value={form.observations} onChange={e => setForm({...form, observations: e.target.value})} />
+          </div>
         </div>
 
-        <button type="submit" className="w-full bg-emerald-600 text-white font-bold text-lg py-4 rounded-2xl shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2 mt-4">
-          <CheckCircle2 /> Finalizar Coleta
+        {/* Bloco 4: Fotos */}
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm">4</div>
+              <h3 className="font-bold text-gray-800">Evidências</h3>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-red-50 text-red-600 px-2 py-1 rounded-lg">Obrigatório</span>
+          </div>
+
+          <label className="bg-gray-50 border-2 border-dashed border-gray-300 hover:border-emerald-400 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors w-full group">
+            <input type="file" multiple accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+            <div className="w-14 h-14 bg-white rounded-full shadow-sm flex items-center justify-center text-emerald-600 mb-1 group-hover:scale-110 transition-transform">
+              <ImagePlus size={28} />
+            </div>
+            <span className="font-bold text-gray-700">Tirar Fotos da Carga</span>
+            <span className="text-xs text-gray-400 font-medium text-center">Abra a câmera ou galeria do celular</span>
+          </label>
+
+          {/* Grid de Previews */}
+          {photos.length > 0 && (
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              {photos.map((photo, idx) => (
+                 <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
+                   <img src={photo.preview} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
+                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                   <button type="button" onClick={() => removePhoto(idx)} className="absolute top-1.5 right-1.5 bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 transition-colors">
+                     <X size={14} />
+                   </button>
+                 </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Botão de Submit Gigante para Mobile */}
+        <button 
+          type="submit" 
+          disabled={photos.length === 0}
+          className="w-full bg-emerald-600 disabled:bg-gray-300 disabled:text-gray-500 text-white font-black text-lg py-5 rounded-2xl shadow-[0_8px_30px_rgb(16,185,129,0.3)] disabled:shadow-none active:scale-[0.98] transition-all flex items-center justify-center gap-3 mt-8"
+        >
+          <CheckCircle2 size={24} /> {photos.length === 0 ? 'Adicione fotos para salvar' : 'Concluir Coleta'}
         </button>
       </form>
     </div>
