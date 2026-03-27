@@ -309,7 +309,21 @@ export const UserColeta = () => {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Produtor Rural *</label>
-                  <select required className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 rounded-2xl px-4 py-4 outline-none transition-all text-slate-800 font-medium appearance-none" value={form.producerId} onChange={e => setForm({...form, producerId: e.target.value})}>
+                  <select 
+                    required 
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 rounded-2xl px-4 py-4 outline-none transition-all text-slate-800 font-medium appearance-none" 
+                    value={form.producerId} 
+                    onChange={e => {
+                      const selectedId = e.target.value;
+                      const selectedProd = producers.find(p => p.id === selectedId);
+                      setForm({
+                        ...form, 
+                        producerId: selectedId,
+                        // Preenche automaticamente o local com o nome da propriedade do produtor
+                        location: selectedProd ? selectedProd.property : ''
+                      });
+                    }}
+                  >
                     <option value="">Selecione...</option>
                     {producers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
@@ -443,7 +457,7 @@ export const UserBeneficiamento = () => {
         <p className="text-slate-500 font-medium">Conferência de recebimento</p>
       </div>
 
-      {!hasPermission && <ReadOnlyBanner text="Modo leitura. Você não tem permissão para realizar as conferências no barracão." />}
+      {!hasPermission && <ReadOnlyBanner text="Modo leitura. Você não tem permissão para realizar as conferências no beneficiamento." />}
 
       {pendingLoads.length === 0 ? (
         <EmptyState icon={Factory} title="Pátio Limpo" description="Não há cargas aguardando conferência no momento." />
