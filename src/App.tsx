@@ -23,9 +23,11 @@ const queryClient = new QueryClient();
 
 // Placeholders minimalistas para as rotas que não implementamos os arquivos gigantes
 const Placeholder = ({ title }: { title: string }) => (
-  <div className="flex flex-col items-center justify-center h-full text-gray-400">
-    <h2 className="text-2xl font-bold text-gray-300 mb-2">{title}</h2>
-    <p>Módulo em desenvolvimento</p>
+  <div className="flex flex-col items-center justify-center h-full text-slate-400">
+    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center">
+      <h2 className="text-2xl font-bold text-slate-800 mb-2">{title}</h2>
+      <p className="text-slate-500">Módulo em desenvolvimento</p>
+    </div>
   </div>
 );
 
@@ -49,16 +51,22 @@ const App = () => (
             {/* ADMIN ROUTES */}
             <Route path="/app" element={<AdminLayout />}>
               <Route index element={<Navigate to="dashboard" replace />} />
+              
+              {/* Novas Rotas do Menu (Visíveis) */}
               <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="cargas" element={<Placeholder title="Histórico e Timeline de Cargas" />} />
+              <Route path="operacao" element={<Placeholder title="Central de Operações" />} />
+              <Route path="cargas" element={<Placeholder title="Gestão de Cargas" />} />
+              <Route path="produtores" element={<Placeholder title="Gestão de Produtores" />} />
+              <Route path="usuarios" element={<Placeholder title="Gestão de Usuários" />} />
+              <Route path="relatorios" element={<Placeholder title="Relatórios e Dashboards" />} />
+              <Route path="configuracoes" element={<Placeholder title="Configurações do Sistema" />} />
+
+              {/* Rotas Antigas (Mantidas internamente para não quebrar lógica, fora do menu) */}
               <Route path="coleta" element={<Placeholder title="Gestão de Coletas" />} />
               <Route path="beneficiamento" element={<Placeholder title="Gestão de Beneficiamento" />} />
               <Route path="financeiro" element={<Placeholder title="Fechamento Financeiro" />} />
               <Route path="pagamentos" element={<Placeholder title="Liberação de Pagamentos" />} />
-              <Route path="produtores" element={<Placeholder title="Cadastro de Produtores" />} />
-              <Route path="colaboradores" element={<Placeholder title="Gestão de Acesso" />} />
-              <Route path="relatorios" element={<Placeholder title="Relatórios e DRE" />} />
-              <Route path="configuracoes" element={<Placeholder title="Configurações da Empresa" />} />
+              <Route path="colaboradores" element={<Placeholder title="Gestão de Colaboradores (Antigo)" />} />
             </Route>
 
             {/* WORKSPACE (COLLABORATOR) ROUTES */}
