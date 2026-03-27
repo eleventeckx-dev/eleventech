@@ -22,7 +22,6 @@ export const UserIndexRedirect = () => {
 // COMPONENTES DE UI REUTILIZÁVEIS (PREMIUM)
 // ==========================================
 
-// Removemos a sombra base fixa daqui para passarmos sombras dinâmicas específicas por seção
 const PremiumCard = ({ children, onClick, className = '' }: any) => (
   <div 
     onClick={onClick}
@@ -76,20 +75,15 @@ export const UserColeta = () => {
   const { producers, currentUser, loads, addLoad } = useAgro();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form, setForm] = useState({ producerId: '', location: '', category: 'Frutas', type: '', boxes: '', grossWeight: '', loaderName: '', observations: '' });
   const [photos, setPhotos] = useState<{file: File, preview: string}[]>([]);
-  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  
+  const [form, setForm] = useState({ 
+    producerId: '', location: '', category: 'Frutas', type: '', boxes: '', grossWeight: '', loaderName: '', observations: '',
+    date: new Date().toISOString().split('T')[0],
+    time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  });
 
   const hasPermission = currentUser?.permissions?.canCollect;
-
-  useEffect(() => {
-    let timer: number;
-    if (isModalOpen) {
-      setCurrentDateTime(new Date());
-      timer = window.setInterval(() => setCurrentDateTime(new Date()), 60000);
-    }
-    return () => clearInterval(timer);
-  }, [isModalOpen]);
 
   const visibleLoads = loads.filter(l => l.companyId === currentUser?.companyId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -109,8 +103,21 @@ export const UserColeta = () => {
     });
   };
 
+  const openModal = () => {
+    setForm(prev => ({
+      ...prev,
+      date: new Date().toISOString().split('T')[0],
+      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    }));
+    setIsModalOpen(true);
+  };
+
   const resetForm = () => {
-    setForm({ producerId: '', location: '', category: 'Frutas', type: '', boxes: '', grossWeight: '', loaderName: '', observations: '' });
+    setForm({ 
+      producerId: '', location: '', category: 'Frutas', type: '', boxes: '', grossWeight: '', loaderName: '', observations: '',
+      date: new Date().toISOString().split('T')[0],
+      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    });
     setPhotos([]);
     setIsModalOpen(false);
   };
@@ -120,7 +127,10 @@ export const UserColeta = () => {
     if (!hasPermission) return;
     
     const photosEvidence = photos.map((p, i) => ({ id: `photo_${Date.now()}_${i}`, url: p.preview, type: 'collection' as const }));
-    const nowIso = new Date().toISOString();
+    
+    // Combina a data e a hora preenchidas no formulário
+    const combinedDate = new Date(`${form.date}T${form.time}:00`);
+    const nowIso = isNaN(combinedDate.getTime()) ? new Date().toISOString() : combinedDate.toISOString();
 
     addLoad({
       id: `load_${Date.now()}`,
@@ -150,7 +160,7 @@ export const UserColeta = () => {
 
   const getStatusBadge = (status: string) => {
     switch(status) {
-      case 'coletado': return <span className="bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-sm">Coletado</span>;
+      case 'coletado': return <span className="bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-sm">No Barracão</span>;
       case 'beneficiado': return <span className="bg-indigo-50 text-indigo-600 border border-indigo-100 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-sm">Beneficiado</span>;
       case 'pagamento_programado': return <span className="bg-amber-50 text-amber-600 border border-amber-100 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-sm">A Pagar</span>;
       case 'pago': return <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-sm">Concluído</span>;
@@ -169,7 +179,7 @@ export const UserColeta = () => {
         <ReadOnlyBanner text="Você está no modo de visualização. Apenas usuários autorizados podem registrar novas coletas." />
       ) : (
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={openModal}
           className="w-full bg-slate-900 text-white font-bold text-lg py-4 rounded-3xl shadow-xl shadow-slate-900/20 active:scale-95 transition-all flex items-center justify-center gap-3 mb-8"
         >
           <div className="bg-white/20 p-1.5 rounded-full"><Plus size={20} /></div>
@@ -192,7 +202,6 @@ export const UserColeta = () => {
             return (
               <PremiumCard 
                 key={load.id} 
-                // A sombra escura e moderna exigida na borda (shadow destacada com tom slate-900 e borda visível)
                 className="relative overflow-hidden group border border-slate-200 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.25)] hover:shadow-[0_16px_48px_-12px_rgba(15,23,42,0.3)]"
               >
                 <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-slate-50 to-white rounded-bl-full -z-10"></div>
@@ -255,13 +264,46 @@ export const UserColeta = () => {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Data</span>
-                    <span className="font-bold text-slate-700">{currentDateTime.toLocaleDateString('pt-BR')}</span>
+                  {/* Data Input Editável */}
+                  <div className="bg-slate-50 hover:bg-slate-100/50 rounded-2xl p-3.5 border border-slate-200 transition-colors">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Data</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setForm({...form, date: new Date().toISOString().split('T')[0]})}
+                        className="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md font-black uppercase tracking-wider active:scale-95 transition-transform"
+                      >
+                        Hoje
+                      </button>
+                    </div>
+                    <input 
+                      type="date" 
+                      required
+                      value={form.date}
+                      onChange={e => setForm({...form, date: e.target.value})}
+                      className="w-full bg-transparent font-bold text-slate-700 outline-none px-1"
+                    />
                   </div>
-                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Hora</span>
-                    <span className="font-bold text-slate-700">{currentDateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+
+                  {/* Hora Input Editável */}
+                  <div className="bg-slate-50 hover:bg-slate-100/50 rounded-2xl p-3.5 border border-slate-200 transition-colors">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Hora</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setForm({...form, time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})}
+                        className="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md font-black uppercase tracking-wider active:scale-95 transition-transform"
+                      >
+                        Agora
+                      </button>
+                    </div>
+                    <input 
+                      type="time" 
+                      required
+                      value={form.time}
+                      onChange={e => setForm({...form, time: e.target.value})}
+                      className="w-full bg-transparent font-bold text-slate-700 outline-none px-1"
+                    />
                   </div>
                 </div>
 
@@ -401,7 +443,7 @@ export const UserBeneficiamento = () => {
         <p className="text-slate-500 font-medium">Conferência de recebimento</p>
       </div>
 
-      {!hasPermission && <ReadOnlyBanner text="Modo leitura. Você não tem permissão para realizar as conferências no beneficiamento." />}
+      {!hasPermission && <ReadOnlyBanner text="Modo leitura. Você não tem permissão para realizar as conferências no barracão." />}
 
       {pendingLoads.length === 0 ? (
         <EmptyState icon={Factory} title="Pátio Limpo" description="Não há cargas aguardando conferência no momento." />
@@ -564,7 +606,7 @@ export const UserFinanceiro = () => {
   return (
     <div className="p-4">
       <div className="mb-8">
-        <h2 className="text-[28px] font-black text-slate-900 tracking-tight">Financeiro</h2>
+        <h2 className="text-[28px] font-black text-slate-900 tracking-tight">Acertos</h2>
         <p className="text-slate-500 font-medium">Lançamento de valores e pagamentos</p>
       </div>
 
