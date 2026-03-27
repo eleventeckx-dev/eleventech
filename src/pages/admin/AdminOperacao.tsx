@@ -13,6 +13,7 @@ const AdminOperacao = () => {
   // Estados dos Filtros
   const [searchId, setSearchId] = useState('');
   const [producerFilter, setProducerFilter] = useState('all');
+  const [productFilter, setProductFilter] = useState('all'); // Novo estado do filtro de produtos
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
   
@@ -23,6 +24,9 @@ const AdminOperacao = () => {
   const baseFilteredLoads = loads.filter(load => {
     if (searchId && !load.id.toLowerCase().includes(searchId.toLowerCase())) return false;
     if (producerFilter !== 'all' && load.producerId !== producerFilter) return false;
+    
+    // Novo Filtro de Produto
+    if (productFilter !== 'all' && load.collection.type.toLowerCase() !== productFilter.toLowerCase()) return false;
     
     if (dateStart) {
       const start = new Date(dateStart);
@@ -113,9 +117,9 @@ const AdminOperacao = () => {
         </p>
       </div>
 
-      {/* Barra de Filtros Premium (Removido filtro de status pois as abas já fazem isso) */}
+      {/* Barra de Filtros Premium */}
       <div className="bg-white/80 backdrop-blur-md p-5 rounded-[2rem] shadow-sm border border-slate-200 flex flex-wrap gap-4 items-end">
-        <div className="flex-1 min-w-[200px] space-y-1.5">
+        <div className="flex-1 min-w-[180px] space-y-1.5">
           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">Buscar ID</label>
           <div className="relative">
             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -129,7 +133,7 @@ const AdminOperacao = () => {
           </div>
         </div>
 
-        <div className="w-full md:w-auto min-w-[220px] space-y-1.5">
+        <div className="w-full md:w-auto min-w-[200px] space-y-1.5">
           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 flex items-center gap-1"><User size={12}/> Produtor</label>
           <select 
             className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all appearance-none"
@@ -138,6 +142,19 @@ const AdminOperacao = () => {
           >
             <option value="all">Todos os Produtores</option>
             {producers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </div>
+
+        {/* Novo Filtro de Produto */}
+        <div className="w-full md:w-auto min-w-[200px] space-y-1.5">
+          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2 flex items-center gap-1"><PackageOpen size={12}/> Produto</label>
+          <select 
+            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all appearance-none"
+            value={productFilter}
+            onChange={(e) => setProductFilter(e.target.value)}
+          >
+            <option value="all">Todos os Produtos</option>
+            {products.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
           </select>
         </div>
 
