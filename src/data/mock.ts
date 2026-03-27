@@ -6,7 +6,10 @@ export const MOCK_COMPANIES: Company[] = [
 ];
 
 export const MOCK_USERS: User[] = [
-  { id: 'usr_sa1', name: 'Plataforma Admin', email: 'admin@agroflow.com', role: 'super_admin', createdAt: '2023-01-01T00:00:00Z', updatedAt: '2023-01-01T00:00:00Z' },
+  // Super Admin atualizado conforme solicitado
+  { id: 'usr_sa1', name: 'Plataforma Admin', email: 'sadmin@agro.com', role: 'super_admin', createdAt: '2023-01-01T00:00:00Z', updatedAt: '2023-01-01T00:00:00Z' },
+  
+  // Demais usuários para testes
   { id: 'usr_a1', companyId: 'comp_1', name: 'Carlos Gerente', email: 'carlos@agrosul.com', role: 'admin', createdAt: '2023-01-10T00:00:00Z', updatedAt: '2023-01-10T00:00:00Z' },
   { 
     id: 'usr_c1', companyId: 'comp_1', name: 'João Coletor', email: 'joao@agrosul.com', role: 'collaborator', 

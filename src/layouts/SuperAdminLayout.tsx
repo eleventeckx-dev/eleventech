@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Building2, Users, CreditCard, Puzzle, ShieldCheck, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Building2, ShieldCheck, LogOut } from 'lucide-react';
 import { useAgro } from '../contexts/AgroContext';
 
 const SuperAdminLayout = () => {
@@ -10,11 +10,6 @@ const SuperAdminLayout = () => {
   const menu = [
     { name: 'Dashboard', path: '/super-admin/dashboard', icon: LayoutDashboard },
     { name: 'Empresas', path: '/super-admin/companies', icon: Building2 },
-    { name: 'Admins', path: '/super-admin/admins', icon: Users },
-    { name: 'Planos', path: '/super-admin/plans', icon: CreditCard },
-    { name: 'Módulos', path: '/super-admin/modules', icon: Puzzle },
-    { name: 'Auditoria', path: '/super-admin/audit', icon: ShieldCheck },
-    { name: 'Configurações', path: '/super-admin/settings', icon: Settings },
   ];
 
   return (
@@ -27,6 +22,7 @@ const SuperAdminLayout = () => {
           </span>
         </div>
         <div className="p-4 flex-1">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-3">Administração</p>
           <div className="space-y-1">
             {menu.map((item) => {
               const Icon = item.icon;
@@ -56,9 +52,9 @@ const SuperAdminLayout = () => {
               <p className="text-xs text-slate-500 truncate">{currentUser?.email}</p>
             </div>
           </div>
-          <button onClick={() => setCurrentUser(null)} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+          <Link to="/" onClick={() => setCurrentUser(null)} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
             <LogOut size={18} /> <span className="text-sm">Sair</span>
-          </button>
+          </Link>
         </div>
       </aside>
       

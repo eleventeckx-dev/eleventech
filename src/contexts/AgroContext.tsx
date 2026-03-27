@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { Load, Producer, User, Company } from '../types';
 import { MOCK_LOADS, MOCK_PRODUCERS, MOCK_USERS, MOCK_COMPANIES } from '../data/mock';
 
@@ -11,6 +11,8 @@ interface AgroContextData {
   addLoad: (load: Load) => void;
   updateLoad: (id: string, load: Partial<Load>) => void;
   addProducer: (producer: Producer) => void;
+  addCompany: (company: Company) => void;
+  updateCompany: (id: string, company: Partial<Company>) => void;
 }
 
 const AgroContext = createContext<AgroContextData>({} as AgroContextData);
@@ -29,8 +31,19 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addProducer = (producer: Producer) => setProducers([...producers, producer]);
 
+  const addCompany = (company: Company) => setCompanies([company, ...companies]);
+  
+  const updateCompany = (id: string, updates: Partial<Company>) => {
+    setCompanies(companies.map(c => c.id === id ? { ...c, ...updates, updatedAt: new Date().toISOString() } : c));
+  };
+
   return (
-    <AgroContext.Provider value={{ currentUser, setCurrentUser, loads, producers, companies, addLoad, updateLoad, addProducer }}>
+    <AgroContext.Provider value={{ 
+      currentUser, setCurrentUser, 
+      loads, producers, companies, 
+      addLoad, updateLoad, addProducer, 
+      addCompany, updateCompany 
+    }}>
       {children}
     </AgroContext.Provider>
   );

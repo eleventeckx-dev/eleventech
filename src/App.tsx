@@ -13,9 +13,10 @@ import AdminLayout from "./layouts/AdminLayout";
 import WorkspaceLayout from "./layouts/WorkspaceLayout";
 
 // Pages
-import RoleSelector from "./pages/RoleSelector";
+import Login from "./pages/Login";
 import { WorkspaceHome, WorkspaceColeta, WorkspaceBeneficiamento } from "./pages/workspace/WorkspacePages";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import { SADashboard, SACompanies } from "./pages/super-admin/SuperAdminPages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,18 +37,13 @@ const App = () => (
       <AgroProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<RoleSelector />} />
+            <Route path="/" element={<Login />} />
 
             {/* SUPER ADMIN ROUTES */}
             <Route path="/super-admin" element={<SuperAdminLayout />}>
               <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<Placeholder title="Dashboard SaaS" />} />
-              <Route path="companies" element={<Placeholder title="Gestão de Empresas Clientes" />} />
-              <Route path="admins" element={<Placeholder title="Gestão de Admins" />} />
-              <Route path="plans" element={<Placeholder title="Planos de Assinatura" />} />
-              <Route path="modules" element={<Placeholder title="Módulos" />} />
-              <Route path="audit" element={<Placeholder title="Auditoria" />} />
-              <Route path="settings" element={<Placeholder title="Configurações SaaS" />} />
+              <Route path="dashboard" element={<SADashboard />} />
+              <Route path="companies" element={<SACompanies />} />
             </Route>
 
             {/* ADMIN ROUTES */}
