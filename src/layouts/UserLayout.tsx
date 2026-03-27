@@ -1,11 +1,17 @@
 import React from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Truck, Factory, DollarSign, User, Leaf } from 'lucide-react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Truck, Factory, DollarSign, User, Leaf, LogOut } from 'lucide-react';
 import { useAgro } from '../contexts/AgroContext';
 
 const UserLayout = () => {
   const location = useLocation();
-  const { currentUser } = useAgro();
+  const navigate = useNavigate();
+  const { currentUser, setCurrentUser } = useAgro();
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    navigate('/');
+  };
 
   const menu = [
     { name: 'Coleta', path: '/user/coleta', icon: Truck },
@@ -30,11 +36,20 @@ const UserLayout = () => {
             </div>
           </div>
           
-          <div className="relative group cursor-pointer">
-            <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 border-2 border-white shadow-sm transition-transform active:scale-95">
-              {currentUser?.name.charAt(0) || '?'}
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleLogout}
+              title="Sair da conta"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 active:scale-95 transition-all"
+            >
+              <LogOut size={20} strokeWidth={2.5} />
+            </button>
+            <div className="relative group cursor-pointer">
+              <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 border-2 border-white shadow-sm transition-transform active:scale-95">
+                {currentUser?.name.charAt(0) || '?'}
+              </div>
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
             </div>
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
           </div>
         </div>
       </header>
