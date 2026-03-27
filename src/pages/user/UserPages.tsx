@@ -17,7 +17,7 @@ export const UserIndexRedirect = () => {
   if (currentUser.permissions?.canProcess) return <Navigate to="/user/beneficiamento" replace />;
   if (currentUser.permissions?.canManageFinancial) return <Navigate to="/user/financeiro" replace />;
   
-  // Default fallback é a coleta agora (que pode ser read-only)
+  // Default fallback é a coleta (sempre como read-only ou editável dependendo da permissão)
   return <Navigate to="/user/coleta" replace />;
 };
 
@@ -52,9 +52,9 @@ export const UserColeta = () => {
     return () => clearInterval(timer);
   }, [isModalOpen]);
 
-  // Lista coletas apenas do próprio usuário
-  const myLoads = loads
-    .filter(l => l.collection.responsibleId === currentUser?.id)
+  // Lista coletas gerais da empresa para que todos os colaboradores possam visualizar o fluxo
+  const visibleLoads = loads
+    .filter(l => l.companyId === currentUser?.companyId)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,14 +134,14 @@ export const UserColeta = () => {
   return (
     <div className="p-4 pb-24">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Minhas Coletas</h2>
-        <p className="text-gray-500 text-sm">Acompanhe seus registros diários</p>
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Coletas Registradas</h2>
+        <p className="text-gray-500 text-sm">Acompanhe os registros de campo</p>
       </div>
 
       {!hasPermission ? (
         <div className="bg-amber-50 border border-amber-200 text-amber-700 p-4 rounded-2xl mb-8 text-sm flex items-start gap-3 shadow-sm">
           <ShieldAlert size={20} className="shrink-0 mt-0.5" /> 
-          <p>Você tem acesso <b>apenas para visualização</b> das coletas. Somente usuários autorizados podem registrar novas cargas.</p>
+          <p>Você tem permissão <b>apenas para visualizar</b> o fluxo de coletas registradas na empresa.</p>
         </div>
       ) : (
         <button 
@@ -153,20 +153,27 @@ export const UserColeta = () => {
       )}
 
       <div className="space-y-4">
-        {myLoads.length === 0 ? (
+        {visibleLoads.length === 0 ? (
           <div className="text-center p-8 bg-white rounded-3xl border border-gray-100 border-dashed shadow-sm">
             <Truck size={48} className="mx-auto text-gray-300 mb-4" strokeWidth={1.5} />
-            <h3 className="text-gray-800 font-bold mb-1">Nenhuma coleta hoje</h3>
-            <p className="text-gray-500 text-sm">{hasPermission ? 'Toque no botão acima para registrar a primeira carga.' : 'Você não possui registros vinculados ao seu perfil.'}</p>
+            <h3 className="text-gray-800 font-bold mb-1">Nenhuma coleta registrada</h3>
+            <p className="text-gray-500 text-sm">{hasPermission ? 'Toque no botão acima para registrar a primeira carga.' : 'Não há registros vinculados à sua empresa ainda.'}</p>
           </div>
         ) : (
-          myLoads.map(load => {
+          visibleLoads.map(load => {
             const prod = producers.find(p => p.id === load.producerId);
+            const isMyLoad = load.collection.responsibleId === currentUser?.id;
+
             return (
               <div key={load.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <p className="text-[10px] font-bold text-gray-400 mb-0.5">ID: {load.id.slice(-8)}</p>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">ID: {load.id.slice(-8)}</p>
+                      {isMyLoad && (
+                        <span className="bg-emerald-50 text-emerald-600 text-[9px] font-bold px-1.5 py-0.5 rounded border border-emerald-100 uppercase">Meu Registro</span>
+                      )}
+                    </div>
                     <p className="font-bold text-gray-800 leading-tight">{prod?.name}</p>
                   </div>
                   {getStatusBadge(load.status)}
@@ -322,7 +329,7 @@ export const UserColeta = () => {
 export const UserBeneficiamento = () => {
   const { loads, producers, updateLoad, currentUser } = useAgro();
   
-  const pendingLoads = loads.filter(l => l.status === 'coletado');
+  const pendingLoads = loads.filter(l => l.companyId === currentUser?.companyId && l.status === 'coletado');
   
   const [selectedLoadId, setSelectedLoadId] = useState('');
   const [photos, setPhotos] = useState<{file: File, preview: string}[]>([]);
@@ -603,7 +610,7 @@ export const UserBeneficiamento = () => {
 export const UserFinanceiro = () => {
   const { loads, producers, updateLoad, currentUser } = useAgro();
   
-  const pendingLoads = loads.filter(l => l.status === 'beneficiado');
+  const pendingLoads = loads.filter(l => l.companyId === currentUser?.companyId && l.status === 'beneficiado');
   const [selectedLoadId, setSelectedLoadId] = useState('');
   
   const [form, setForm] = useState({ 

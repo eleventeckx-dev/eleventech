@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAgro } from '../contexts/AgroContext';
 import { MOCK_USERS } from '../data/mock';
-import { ShieldCheck, LogIn, Mail, Lock, Crown, Building2, Truck, DollarSign } from 'lucide-react';
+import { ShieldCheck, LogIn, Mail, Lock, Crown, Building2, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Login = () => {
@@ -18,16 +18,14 @@ const Login = () => {
       setCurrentUser(user);
       toast.success(`Bem-vindo, ${user.name}!`);
       
-      // Redirecionamento Inteligente baseado na Role e Permissões
+      // Redirecionamento Baseado no Perfil
       if (user.role === 'super_admin') {
         navigate('/super-admin/dashboard');
       } else if (user.role === 'admin') {
         navigate('/app/dashboard');
       } else if (user.role === 'collaborator') {
-        if (user.permissions?.canCollect) navigate('/user/coleta');
-        else if (user.permissions?.canProcess) navigate('/user/beneficiamento');
-        else if (user.permissions?.canManageFinancial) navigate('/user/financeiro');
-        else navigate('/user/perfil'); 
+        // App Operacional Unificado para todos os colaboradores
+        navigate('/user'); 
       }
     } else {
       toast.error('E-mail ou senha incorretos.');
@@ -42,8 +40,8 @@ const Login = () => {
   const quickAccess = [
     { name: 'Super Admin', email: 'sadmin@agro.com', icon: Crown, color: 'text-purple-600', bg: 'bg-purple-50 hover:bg-purple-100 border-purple-200' },
     { name: 'Gestor (Admin)', email: 'carlos@agrosul.com', icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 hover:bg-blue-100 border-blue-200' },
-    { name: 'App Coleta', email: 'joao@agrosul.com', icon: Truck, color: 'text-emerald-600', bg: 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200' },
-    { name: 'App Financeiro', email: 'maria@agrosul.com', icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-50 hover:bg-amber-100 border-amber-200' },
+    { name: 'Colaborador (João)', email: 'joao@agrosul.com', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200' },
+    { name: 'Colaborador (Maria)', email: 'maria@agrosul.com', icon: User, color: 'text-amber-600', bg: 'bg-amber-50 hover:bg-amber-100 border-amber-200' },
   ];
 
   return (
