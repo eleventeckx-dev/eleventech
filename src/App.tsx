@@ -21,6 +21,7 @@ import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
 import { SADashboard, SACompanies } from "./pages/super-admin/SuperAdminPages";
 import NotFound from "./pages/NotFound";
 import { 
+  UserIndexRedirect,
   UserColeta, 
   UserBeneficiamento, 
   UserFinanceiro, 
@@ -57,8 +58,8 @@ const App = () => (
 
             {/* USER (COLLABORATOR) ROUTES - Mobile App */}
             <Route path="/user" element={<UserLayout />}>
-              {/* Rota raiz redireciona diretamente para o Passo 1 do fluxo */}
-              <Route index element={<Navigate to="coleta" replace />} />
+              {/* Agora usa o redirecionamento inteligente que criamos */}
+              <Route index element={<UserIndexRedirect />} />
               
               {/* As únicas 4 etapas permitidas no App */}
               <Route path="coleta" element={<UserColeta />} />

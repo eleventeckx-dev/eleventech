@@ -22,10 +22,18 @@ const Login = () => {
       setCurrentUser(user);
       toast.success(`Bem-vindo, ${user.name}!`);
       
-      // Redirecionamento Inteligente baseado na Role
-      if (user.role === 'super_admin') navigate('/super-admin/dashboard');
-      if (user.role === 'admin') navigate('/app/dashboard');
-      if (user.role === 'collaborator') navigate('/user/coleta'); // Direcionamento direto para a aba de coleta do user
+      // Redirecionamento Inteligente baseado na Role e Permissões
+      if (user.role === 'super_admin') {
+        navigate('/super-admin/dashboard');
+      } else if (user.role === 'admin') {
+        navigate('/app/dashboard');
+      } else if (user.role === 'collaborator') {
+        // Verifica a primeira permissão disponível para direcionar corretamente
+        if (user.permissions?.canCollect) navigate('/user/coleta');
+        else if (user.permissions?.canProcess) navigate('/user/beneficiamento');
+        else if (user.permissions?.canManageFinancial) navigate('/user/financeiro');
+        else navigate('/user/perfil'); // Fallback de segurança
+      }
     } else {
       toast.error('E-mail ou senha incorretos.');
     }
@@ -91,7 +99,8 @@ const Login = () => {
           <ul className="text-sm text-blue-700 space-y-1">
             <li><span className="font-bold">Super Admin:</span> sadmin@agro.com</li>
             <li><span className="font-bold">Admin Empresa:</span> carlos@agrosul.com</li>
-            <li><span className="font-bold">App Colaborador:</span> joao@agrosul.com</li>
+            <li><span className="font-bold">App Coleta:</span> joao@agrosul.com</li>
+            <li><span className="font-bold">App Financeiro:</span> maria@agrosul.com</li>
           </ul>
         </div>
 

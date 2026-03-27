@@ -1,11 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAgro } from '../../contexts/AgroContext';
 import { 
   CheckCircle2, ChevronRight, Factory, User, LogOut, DollarSign, 
   ShieldAlert, ImagePlus, X, Calendar, Clock, Plus, Truck, Scale, AlertTriangle, ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+// ---- REDIRECIONAMENTO INTELIGENTE DA RAIZ DO APP ----
+export const UserIndexRedirect = () => {
+  const { currentUser } = useAgro();
+  
+  if (!currentUser) return <Navigate to="/" replace />;
+  
+  if (currentUser.permissions?.canCollect) return <Navigate to="/user/coleta" replace />;
+  if (currentUser.permissions?.canProcess) return <Navigate to="/user/beneficiamento" replace />;
+  if (currentUser.permissions?.canManageFinancial) return <Navigate to="/user/financeiro" replace />;
+  
+  return <Navigate to="/user/perfil" replace />;
+};
+
 
 // ---- COLETA (PASSO 1) ----
 export const UserColeta = () => {
@@ -618,6 +632,12 @@ export const UserFinanceiro = () => {
 // ---- PERFIL DO USUÁRIO (PASSO 4) ----
 export const UserPerfil = () => {
   const { currentUser, setCurrentUser } = useAgro();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    navigate('/');
+  };
 
   return (
     <div className="p-4 pb-20">
@@ -654,7 +674,7 @@ export const UserPerfil = () => {
       </div>
 
       <button 
-        onClick={() => setCurrentUser(null)} 
+        onClick={handleLogout}
         className="w-full bg-red-50 text-red-600 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-red-100 active:scale-95 transition"
       >
         <LogOut size={20} /> Sair da Conta
