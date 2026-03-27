@@ -10,7 +10,7 @@ import { AgroProvider } from "./contexts/AgroContext";
 // Layouts
 import SuperAdminLayout from "./layouts/SuperAdminLayout";
 import AdminLayout from "./layouts/AdminLayout";
-import WorkspaceLayout from "./layouts/WorkspaceLayout";
+import UserLayout from "./layouts/UserLayout";
 
 // Pages
 import Login from "./pages/Login";
@@ -21,23 +21,13 @@ import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
 import { SADashboard, SACompanies } from "./pages/super-admin/SuperAdminPages";
 import NotFound from "./pages/NotFound";
 import { 
-  WorkspaceColeta, 
-  WorkspaceBeneficiamento, 
-  WorkspaceFinanceiro, 
-  WorkspacePerfil 
-} from "./pages/workspace/WorkspacePages";
+  UserColeta, 
+  UserBeneficiamento, 
+  UserFinanceiro, 
+  UserPerfil 
+} from "./pages/user/UserPages";
 
 const queryClient = new QueryClient();
-
-// Placeholders minimalistas para as rotas
-const Placeholder = ({ title }: { title: string }) => (
-  <div className="flex flex-col items-center justify-center h-full text-slate-400">
-    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center">
-      <h2 className="text-2xl font-bold text-slate-800 mb-2">{title}</h2>
-      <p className="text-slate-500">Módulo em desenvolvimento</p>
-    </div>
-  </div>
-);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -65,16 +55,16 @@ const App = () => (
               <Route path="configuracoes" element={<AdminConfiguracoes />} />
             </Route>
 
-            {/* WORKSPACE (COLLABORATOR) ROUTES - App Mobile */}
-            <Route path="/workspace" element={<WorkspaceLayout />}>
+            {/* USER (COLLABORATOR) ROUTES - Mobile App */}
+            <Route path="/user" element={<UserLayout />}>
               {/* Rota raiz redireciona diretamente para o Passo 1 do fluxo */}
               <Route index element={<Navigate to="coleta" replace />} />
               
               {/* As únicas 4 etapas permitidas no App */}
-              <Route path="coleta" element={<WorkspaceColeta />} />
-              <Route path="beneficiamento" element={<WorkspaceBeneficiamento />} />
-              <Route path="financeiro" element={<WorkspaceFinanceiro />} />
-              <Route path="perfil" element={<WorkspacePerfil />} />
+              <Route path="coleta" element={<UserColeta />} />
+              <Route path="beneficiamento" element={<UserBeneficiamento />} />
+              <Route path="financeiro" element={<UserFinanceiro />} />
+              <Route path="perfil" element={<UserPerfil />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

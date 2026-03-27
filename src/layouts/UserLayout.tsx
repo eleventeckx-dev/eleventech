@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Truck, Factory, DollarSign, User } from 'lucide-react';
 import { useAgro } from '../contexts/AgroContext';
 
-const WorkspaceLayout = () => {
+const UserLayout = () => {
   const location = useLocation();
   const { currentUser } = useAgro();
 
@@ -11,10 +11,10 @@ const WorkspaceLayout = () => {
 
   // As 4 etapas restritas do aplicativo
   const menu = [
-    { name: 'Coleta', path: '/workspace/coleta', icon: Truck, show: permissions?.canCollect },
-    { name: 'Beneficiamento', path: '/workspace/beneficiamento', icon: Factory, show: permissions?.canProcess },
-    { name: 'Financeiro', path: '/workspace/financeiro', icon: DollarSign, show: permissions?.canManageFinancial },
-    { name: 'Perfil', path: '/workspace/perfil', icon: User, show: true }, // Perfil sempre visível
+    { name: 'Coleta', path: '/user/coleta', icon: Truck, show: permissions?.canCollect },
+    { name: 'Beneficiamento', path: '/user/beneficiamento', icon: Factory, show: permissions?.canProcess },
+    { name: 'Financeiro', path: '/user/financeiro', icon: DollarSign, show: permissions?.canManageFinancial },
+    { name: 'Perfil', path: '/user/perfil', icon: User, show: true }, // Perfil sempre visível
   ].filter(item => item.show);
 
   return (
@@ -71,4 +71,4 @@ const WorkspaceLayout = () => {
   );
 };
 
-export default WorkspaceLayout;
+export default UserLayout;

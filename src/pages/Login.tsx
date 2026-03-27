@@ -25,7 +25,7 @@ const Login = () => {
       // Redirecionamento Inteligente baseado na Role
       if (user.role === 'super_admin') navigate('/super-admin/dashboard');
       if (user.role === 'admin') navigate('/app/dashboard');
-      if (user.role === 'collaborator') navigate('/workspace/home');
+      if (user.role === 'collaborator') navigate('/user/coleta'); // Direcionamento direto para a aba de coleta do user
     } else {
       toast.error('E-mail ou senha incorretos.');
     }

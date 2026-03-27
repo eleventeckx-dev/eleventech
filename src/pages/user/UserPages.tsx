@@ -4,7 +4,7 @@ import { useAgro } from '../../contexts/AgroContext';
 import { Camera, CheckCircle2, ChevronRight, Factory, User, LogOut, DollarSign, ShieldAlert } from 'lucide-react';
 
 // ---- COLETA (PASSO 1) ----
-export const WorkspaceColeta = () => {
+export const UserColeta = () => {
   const { producers, currentUser, addLoad } = useAgro();
   const navigate = useNavigate();
   const [form, setForm] = useState({ producerId: '', location: '', category: 'Frutas', type: '', boxes: '', grossWeight: '' });
@@ -32,7 +32,7 @@ export const WorkspaceColeta = () => {
     };
     addLoad(newLoad);
     alert('Coleta registrada com sucesso!');
-    navigate('/workspace/beneficiamento');
+    navigate('/user/beneficiamento');
   };
 
   if (!currentUser?.permissions?.canCollect) {
@@ -109,7 +109,7 @@ export const WorkspaceColeta = () => {
 };
 
 // ---- BENEFICIAMENTO (PASSO 2) ----
-export const WorkspaceBeneficiamento = () => {
+export const UserBeneficiamento = () => {
   const { loads, producers, updateLoad, currentUser } = useAgro();
   const navigate = useNavigate();
   const pendingLoads = loads.filter(l => l.status === 'coletado');
@@ -143,7 +143,7 @@ export const WorkspaceBeneficiamento = () => {
       }
     });
     alert('Beneficiamento concluído!');
-    navigate('/workspace/financeiro');
+    navigate('/user/financeiro');
   };
 
   if (!currentUser?.permissions?.canProcess) {
@@ -235,7 +235,7 @@ export const WorkspaceBeneficiamento = () => {
 };
 
 // ---- FINANCEIRO (PASSO 3) ----
-export const WorkspaceFinanceiro = () => {
+export const UserFinanceiro = () => {
   const { currentUser } = useAgro();
 
   if (!currentUser?.permissions?.canManageFinancial) {
@@ -265,7 +265,7 @@ export const WorkspaceFinanceiro = () => {
 };
 
 // ---- PERFIL DO USUÁRIO (PASSO 4) ----
-export const WorkspacePerfil = () => {
+export const UserPerfil = () => {
   const { currentUser, setCurrentUser } = useAgro();
 
   return (
