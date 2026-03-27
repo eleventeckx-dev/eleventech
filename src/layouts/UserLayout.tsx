@@ -7,15 +7,13 @@ const UserLayout = () => {
   const location = useLocation();
   const { currentUser } = useAgro();
 
-  const permissions = currentUser?.permissions;
-
-  // As 4 etapas restritas do aplicativo
+  // Todos os itens visíveis independentemente de permissão (bloqueio será nas ações)
   const menu = [
-    { name: 'Coleta', path: '/user/coleta', icon: Truck, show: permissions?.canCollect },
-    { name: 'Beneficiamento', path: '/user/beneficiamento', icon: Factory, show: permissions?.canProcess },
-    { name: 'Financeiro', path: '/user/financeiro', icon: DollarSign, show: permissions?.canManageFinancial },
-    { name: 'Perfil', path: '/user/perfil', icon: User, show: true }, // Perfil sempre visível
-  ].filter(item => item.show);
+    { name: 'Coleta', path: '/user/coleta', icon: Truck },
+    { name: 'Beneficiamento', path: '/user/beneficiamento', icon: Factory },
+    { name: 'Financeiro', path: '/user/financeiro', icon: DollarSign },
+    { name: 'Perfil', path: '/user/perfil', icon: User },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -30,7 +28,7 @@ const UserLayout = () => {
           </div>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-emerald-800 flex items-center justify-center font-bold border border-emerald-600 shadow-sm">
-              {currentUser?.name.charAt(0)}
+              {currentUser?.name.charAt(0) || '?'}
             </div>
           </div>
         </div>

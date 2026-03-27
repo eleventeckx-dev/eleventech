@@ -3,7 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { useAgro } from '../../contexts/AgroContext';
 import { 
   CheckCircle2, ChevronRight, Factory, User, LogOut, DollarSign, 
-  ShieldAlert, ImagePlus, X, Calendar, Clock, Plus, Truck, Scale, AlertTriangle, ArrowRight, Receipt
+  ShieldAlert, ImagePlus, X, Calendar, Clock, Plus, Truck, Scale, AlertTriangle, ArrowRight, Receipt, Lock
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -17,7 +17,8 @@ export const UserIndexRedirect = () => {
   if (currentUser.permissions?.canProcess) return <Navigate to="/user/beneficiamento" replace />;
   if (currentUser.permissions?.canManageFinancial) return <Navigate to="/user/financeiro" replace />;
   
-  return <Navigate to="/user/perfil" replace />;
+  // Default fallback é a coleta agora (que pode ser read-only)
+  return <Navigate to="/user/coleta" replace />;
 };
 
 
@@ -40,6 +41,8 @@ export const UserColeta = () => {
   const [photos, setPhotos] = useState<{file: File, preview: string}[]>([]);
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
+  const hasPermission = currentUser?.permissions?.canCollect;
+
   useEffect(() => {
     let timer: number;
     if (isModalOpen) {
@@ -49,6 +52,7 @@ export const UserColeta = () => {
     return () => clearInterval(timer);
   }, [isModalOpen]);
 
+  // Lista coletas apenas do próprio usuário
   const myLoads = loads
     .filter(l => l.collection.responsibleId === currentUser?.id)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -80,6 +84,7 @@ export const UserColeta = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hasPermission) return;
     
     const photosEvidence = photos.map((p, i) => ({
       id: `photo_${Date.now()}_${i}`,
@@ -116,16 +121,6 @@ export const UserColeta = () => {
     resetForm();
   };
 
-  if (!currentUser?.permissions?.canCollect) {
-    return (
-      <div className="p-8 flex flex-col items-center justify-center h-full text-center mt-20">
-        <ShieldAlert size={48} className="text-gray-300 mb-4" />
-        <h3 className="text-lg font-bold text-gray-800">Sem Permissão</h3>
-        <p className="text-gray-500 text-sm mt-2">Você não possui acesso a esta etapa.</p>
-      </div>
-    );
-  }
-
   const getStatusBadge = (status: string) => {
     switch(status) {
       case 'coletado': return <span className="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-blue-200">Enviado ao Barracão</span>;
@@ -143,19 +138,26 @@ export const UserColeta = () => {
         <p className="text-gray-500 text-sm">Acompanhe seus registros diários</p>
       </div>
 
-      <button 
-        onClick={() => setIsModalOpen(true)}
-        className="w-full bg-emerald-600 text-white font-bold text-lg py-4 rounded-2xl shadow-[0_8px_20px_rgb(16,185,129,0.3)] active:scale-95 transition-all flex items-center justify-center gap-2 mb-8"
-      >
-        <Plus size={24} /> Registrar Nova Coleta
-      </button>
+      {!hasPermission ? (
+        <div className="bg-amber-50 border border-amber-200 text-amber-700 p-4 rounded-2xl mb-8 text-sm flex items-start gap-3 shadow-sm">
+          <ShieldAlert size={20} className="shrink-0 mt-0.5" /> 
+          <p>Você tem acesso <b>apenas para visualização</b> das coletas. Somente usuários autorizados podem registrar novas cargas.</p>
+        </div>
+      ) : (
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="w-full bg-emerald-600 text-white font-bold text-lg py-4 rounded-2xl shadow-[0_8px_20px_rgb(16,185,129,0.3)] active:scale-95 transition-all flex items-center justify-center gap-2 mb-8"
+        >
+          <Plus size={24} /> Registrar Nova Coleta
+        </button>
+      )}
 
       <div className="space-y-4">
         {myLoads.length === 0 ? (
           <div className="text-center p-8 bg-white rounded-3xl border border-gray-100 border-dashed shadow-sm">
             <Truck size={48} className="mx-auto text-gray-300 mb-4" strokeWidth={1.5} />
             <h3 className="text-gray-800 font-bold mb-1">Nenhuma coleta hoje</h3>
-            <p className="text-gray-500 text-sm">Toque no botão acima para registrar a primeira carga.</p>
+            <p className="text-gray-500 text-sm">{hasPermission ? 'Toque no botão acima para registrar a primeira carga.' : 'Você não possui registros vinculados ao seu perfil.'}</p>
           </div>
         ) : (
           myLoads.map(load => {
@@ -192,7 +194,7 @@ export const UserColeta = () => {
         )}
       </div>
 
-      {isModalOpen && (
+      {isModalOpen && hasPermission && (
         <div className="fixed inset-0 z-50 bg-gray-50 flex flex-col animate-in slide-in-from-bottom-full duration-300">
           <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sticky top-0 z-10 shadow-sm">
             <h2 className="text-lg font-bold text-gray-900 tracking-tight flex items-center gap-2">
@@ -331,6 +333,7 @@ export const UserBeneficiamento = () => {
     observations: '' 
   });
 
+  const hasPermission = currentUser?.permissions?.canProcess;
   const selectedLoad = pendingLoads.find(l => l.id === selectedLoadId);
 
   // Variáveis calculadas em tempo real
@@ -368,7 +371,7 @@ export const UserBeneficiamento = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedLoad) return;
+    if (!selectedLoad || !hasPermission) return;
 
     const photosEvidence = photos.map((p, i) => ({
       id: `photo_${Date.now()}_${i}`,
@@ -395,16 +398,6 @@ export const UserBeneficiamento = () => {
     closeForm();
   };
 
-  if (!currentUser?.permissions?.canProcess) {
-    return (
-      <div className="p-8 flex flex-col items-center justify-center h-full text-center mt-20">
-        <ShieldAlert size={48} className="text-gray-300 mb-4" />
-        <h3 className="text-lg font-bold text-gray-800">Sem Permissão</h3>
-        <p className="text-gray-500 text-sm mt-2">Você não possui acesso a esta etapa.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="p-4 pb-24">
       {/* Cabeçalho da Lista */}
@@ -412,6 +405,13 @@ export const UserBeneficiamento = () => {
         <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Beneficiamento</h2>
         <p className="text-gray-500 text-sm">Conferência de cargas no barracão</p>
       </div>
+
+      {!hasPermission && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-700 p-4 rounded-2xl mb-6 text-sm flex items-start gap-3 shadow-sm">
+          <ShieldAlert size={20} className="shrink-0 mt-0.5" /> 
+          <p>Você tem acesso <b>apenas para visualização</b>. O preenchimento da conferência está bloqueado.</p>
+        </div>
+      )}
 
       {/* Lista de Cargas Pendentes */}
       {pendingLoads.length === 0 ? (
@@ -427,8 +427,8 @@ export const UserBeneficiamento = () => {
             return (
               <div 
                 key={load.id} 
-                onClick={() => setSelectedLoadId(load.id)} 
-                className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer active:scale-95 transition-all group hover:border-blue-200"
+                onClick={() => hasPermission && setSelectedLoadId(load.id)} 
+                className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between transition-all group ${hasPermission ? 'cursor-pointer active:scale-95 hover:border-blue-200' : 'opacity-80 grayscale-[20%]'}`}
               >
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Aguardando Conferência</p>
@@ -442,8 +442,8 @@ export const UserBeneficiamento = () => {
                      </span>
                   </div>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  <ArrowRight size={20} />
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${hasPermission ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white' : 'bg-gray-100 text-gray-400'}`}>
+                  {hasPermission ? <ArrowRight size={20} /> : <Lock size={18} />}
                 </div>
               </div>
             );
@@ -452,7 +452,7 @@ export const UserBeneficiamento = () => {
       )}
 
       {/* MODAL / POP-UP MOBILE (FULL SCREEN) - Formulário de Beneficiamento */}
-      {selectedLoadId && selectedLoad && (
+      {selectedLoadId && selectedLoad && hasPermission && (
         <div className="fixed inset-0 z-50 bg-gray-50 flex flex-col animate-in slide-in-from-bottom-full duration-300">
           
           <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sticky top-0 z-10 shadow-sm">
@@ -613,6 +613,7 @@ export const UserFinanceiro = () => {
     observations: '' 
   });
 
+  const hasPermission = currentUser?.permissions?.canManageFinancial;
   const selectedLoad = pendingLoads.find(l => l.id === selectedLoadId);
 
   // Variáveis calculadas em tempo real
@@ -630,7 +631,7 @@ export const UserFinanceiro = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedLoad) return;
+    if (!selectedLoad || !hasPermission) return;
 
     updateLoad(selectedLoad.id, {
       status: 'pagamento_programado',
@@ -650,16 +651,6 @@ export const UserFinanceiro = () => {
     closeForm();
   };
 
-  if (!currentUser?.permissions?.canManageFinancial) {
-    return (
-      <div className="p-8 flex flex-col items-center justify-center h-full text-center mt-20">
-        <ShieldAlert size={48} className="text-gray-300 mb-4" />
-        <h3 className="text-lg font-bold text-gray-800">Sem Permissão</h3>
-        <p className="text-gray-500 text-sm mt-2">Você não possui acesso a esta etapa.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="p-4 pb-24">
       {/* Cabeçalho da Lista */}
@@ -667,6 +658,13 @@ export const UserFinanceiro = () => {
         <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Financeiro</h2>
         <p className="text-gray-500 text-sm">Fechamento e agenda de pagamentos</p>
       </div>
+
+      {!hasPermission && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-700 p-4 rounded-2xl mb-6 text-sm flex items-start gap-3 shadow-sm">
+          <ShieldAlert size={20} className="shrink-0 mt-0.5" /> 
+          <p>Você tem acesso <b>apenas para visualização</b>. O fechamento financeiro está bloqueado.</p>
+        </div>
+      )}
 
       {/* Lista de Cargas Pendentes (Apenas Status: Beneficiado) */}
       {pendingLoads.length === 0 ? (
@@ -682,8 +680,8 @@ export const UserFinanceiro = () => {
             return (
               <div 
                 key={load.id} 
-                onClick={() => setSelectedLoadId(load.id)} 
-                className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer active:scale-95 transition-all group hover:border-amber-200"
+                onClick={() => hasPermission && setSelectedLoadId(load.id)} 
+                className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between transition-all group ${hasPermission ? 'cursor-pointer active:scale-95 hover:border-amber-200' : 'opacity-80 grayscale-[20%]'}`}
               >
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Aguardando Fechamento</p>
@@ -697,8 +695,8 @@ export const UserFinanceiro = () => {
                      </span>
                   </div>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 group-hover:bg-amber-500 group-hover:text-white transition-colors">
-                  <ArrowRight size={20} />
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${hasPermission ? 'bg-amber-50 text-amber-600 group-hover:bg-amber-500 group-hover:text-white' : 'bg-gray-100 text-gray-400'}`}>
+                  {hasPermission ? <ArrowRight size={20} /> : <Lock size={18} />}
                 </div>
               </div>
             );
@@ -707,7 +705,7 @@ export const UserFinanceiro = () => {
       )}
 
       {/* MODAL / POP-UP MOBILE (FULL SCREEN) - Formulário do Financeiro */}
-      {selectedLoadId && selectedLoad && (
+      {selectedLoadId && selectedLoad && hasPermission && (
         <div className="fixed inset-0 z-50 bg-gray-50 flex flex-col animate-in slide-in-from-bottom-full duration-300">
           
           <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sticky top-0 z-10 shadow-sm">

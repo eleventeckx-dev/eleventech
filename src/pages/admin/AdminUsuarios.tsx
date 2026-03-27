@@ -154,7 +154,6 @@ const AdminUsuarios = () => {
                           {user.permissions.canCollect && <span className="bg-slate-100 px-1.5 py-0.5 rounded">Coleta</span>}
                           {user.permissions.canProcess && <span className="bg-slate-100 px-1.5 py-0.5 rounded">Benefic.</span>}
                           {user.permissions.canManageFinancial && <span className="bg-slate-100 px-1.5 py-0.5 rounded">Financ.</span>}
-                          {user.permissions.canMarkPayment && <span className="bg-slate-100 px-1.5 py-0.5 rounded">Pagam.</span>}
                         </div>
                       )}
                     </div>
@@ -245,14 +244,12 @@ const AdminUsuarios = () => {
               {/* Permissões Específicas para Colaboradores */}
               {form.role === 'collaborator' && (
                 <div className="mt-4 bg-slate-50 border border-slate-200 rounded-2xl p-4">
-                  <p className="text-sm font-bold text-slate-800 mb-3">Permissões do App (O que ele pode fazer?)</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <p className="text-sm font-bold text-slate-800 mb-3">Permissões de Acesso (Quais etapas ele pode editar?)</p>
+                  <div className="grid grid-cols-1 gap-3">
                     {[
-                      { key: 'canCollect', label: 'Registrar Coleta' },
-                      { key: 'canProcess', label: 'Fazer Beneficiamento' },
-                      { key: 'canManageFinancial', label: 'Fechar Financeiro' },
-                      { key: 'canMarkPayment', label: 'Liberar Pagamentos' },
-                      { key: 'canViewReports', label: 'Ver Relatórios' },
+                      { key: 'canCollect', label: 'Pode Registrar Nova Coleta' },
+                      { key: 'canProcess', label: 'Pode Fazer Beneficiamento' },
+                      { key: 'canManageFinancial', label: 'Pode Fechar o Financeiro' },
                     ].map(perm => (
                       <label key={perm.key} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-100 cursor-pointer transition">
                         <input 
@@ -268,6 +265,9 @@ const AdminUsuarios = () => {
                       </label>
                     ))}
                   </div>
+                  <p className="text-xs text-slate-500 mt-3 ml-1 bg-white p-2 rounded-lg border border-slate-100">
+                    * O usuário conseguirá visualizar a lista de todas as etapas, mas os botões de ação estarão bloqueados onde ele não tiver permissão.
+                  </p>
                 </div>
               )}
 
