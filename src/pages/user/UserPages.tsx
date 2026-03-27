@@ -147,6 +147,16 @@ export const UserColeta = () => {
     resetForm();
   };
 
+  const getStatusBadge = (status: string) => {
+    switch(status) {
+      case 'coletado': return <span className="bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-sm">No Barracão</span>;
+      case 'beneficiado': return <span className="bg-indigo-50 text-indigo-600 border border-indigo-100 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-sm">Beneficiado</span>;
+      case 'pagamento_programado': return <span className="bg-amber-50 text-amber-600 border border-amber-100 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-sm">A Pagar</span>;
+      case 'pago': return <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-sm">Concluído</span>;
+      default: return null;
+    }
+  };
+
   return (
     <div className="p-4">
       <div className="mb-8">
@@ -183,12 +193,15 @@ export const UserColeta = () => {
                 <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-slate-50 to-white rounded-bl-full -z-10"></div>
                 
                 <div className="flex justify-between items-start mb-4">
-                  <div>
+                  <div className="flex-1 pr-2">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">ID: {load.id.slice(-6)}</p>
                       {isMyLoad && <span className="bg-emerald-100 text-emerald-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Meu Registro</span>}
                     </div>
-                    <p className="text-lg font-bold text-slate-800 leading-tight">{prod?.name}</p>
+                    <p className="text-lg font-bold text-slate-800 leading-tight truncate">{prod?.name}</p>
+                  </div>
+                  <div className="shrink-0 flex items-start">
+                    {getStatusBadge(load.status)}
                   </div>
                 </div>
 
@@ -209,6 +222,7 @@ export const UserColeta = () => {
                     <span className="flex items-center gap-1.5"><Calendar size={14}/> {new Date(load.createdAt).toLocaleDateString('pt-BR')}</span>
                     <span className="flex items-center gap-1.5"><Clock size={14}/> {new Date(load.createdAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
                   </div>
+                  {/* Ponto pulsante extra para destacar atividades bem recentes/pendentes de ação da próxima etapa */}
                   {load.status === 'coletado' && <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] animate-pulse"></span>}
                 </div>
               </PremiumCard>
