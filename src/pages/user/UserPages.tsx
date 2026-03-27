@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAgro } from '../../contexts/AgroContext';
 import { 
   CheckCircle2, ChevronRight, Factory, User, LogOut, DollarSign, 
-  ShieldAlert, ImagePlus, X, Calendar, Clock, Plus, PackageSearch, Truck 
+  ShieldAlert, ImagePlus, X, Calendar, Clock, Plus, Truck, Scale, AlertTriangle, ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 // ---- COLETA (PASSO 1) ----
 export const UserColeta = () => {
   const { producers, currentUser, loads, addLoad } = useAgro();
-  const navigate = useNavigate();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState({ 
@@ -27,7 +26,6 @@ export const UserColeta = () => {
   const [photos, setPhotos] = useState<{file: File, preview: string}[]>([]);
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
-  // Atualiza o relógio na tela do formulário
   useEffect(() => {
     let timer: number;
     if (isModalOpen) {
@@ -37,7 +35,6 @@ export const UserColeta = () => {
     return () => clearInterval(timer);
   }, [isModalOpen]);
 
-  // Filtra as coletas feitas por este usuário, ordenadas da mais recente para a mais antiga
   const myLoads = loads
     .filter(l => l.collection.responsibleId === currentUser?.id)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -115,7 +112,6 @@ export const UserColeta = () => {
     );
   }
 
-  // Dicionário de cores e textos de status
   const getStatusBadge = (status: string) => {
     switch(status) {
       case 'coletado': return <span className="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-blue-200">Enviado ao Barracão</span>;
@@ -128,14 +124,11 @@ export const UserColeta = () => {
 
   return (
     <div className="p-4 pb-24">
-      
-      {/* HEADER DA LISTAGEM */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Minhas Coletas</h2>
         <p className="text-gray-500 text-sm">Acompanhe seus registros diários</p>
       </div>
 
-      {/* BOTÃO NOVA COLETA */}
       <button 
         onClick={() => setIsModalOpen(true)}
         className="w-full bg-emerald-600 text-white font-bold text-lg py-4 rounded-2xl shadow-[0_8px_20px_rgb(16,185,129,0.3)] active:scale-95 transition-all flex items-center justify-center gap-2 mb-8"
@@ -143,7 +136,6 @@ export const UserColeta = () => {
         <Plus size={24} /> Registrar Nova Coleta
       </button>
 
-      {/* LISTAGEM DAS COLETAS */}
       <div className="space-y-4">
         {myLoads.length === 0 ? (
           <div className="text-center p-8 bg-white rounded-3xl border border-gray-100 border-dashed shadow-sm">
@@ -186,11 +178,8 @@ export const UserColeta = () => {
         )}
       </div>
 
-      {/* MODAL / POP-UP MOBILE (FULL SCREEN) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-gray-50 flex flex-col animate-in slide-in-from-bottom-full duration-300">
-          
-          {/* Header Fixo do Modal */}
           <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sticky top-0 z-10 shadow-sm">
             <h2 className="text-lg font-bold text-gray-900 tracking-tight flex items-center gap-2">
                <Truck className="text-emerald-600" size={20} /> Nova Coleta
@@ -200,17 +189,14 @@ export const UserColeta = () => {
             </button>
           </div>
 
-          {/* Corpo Rolável do Formulário */}
           <div className="flex-1 overflow-y-auto p-4 pb-32 custom-scrollbar">
             <form onSubmit={handleSubmit} className="space-y-6">
               
-              {/* Bloco 1: Origem */}
               <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
                 <div className="flex items-center gap-2 mb-2 border-b border-gray-50 pb-3">
                    <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">1</div>
                    <h3 className="font-bold text-gray-800">Origem & Data</h3>
                 </div>
-
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div className="bg-gray-50 rounded-2xl p-3 flex flex-col justify-center border border-gray-100">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1 mb-1"><Calendar size={12}/> Data auto</span>
@@ -221,7 +207,6 @@ export const UserColeta = () => {
                     <span className="font-bold text-gray-700">{currentDateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                 </div>
-
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-gray-700 ml-1">Produtor Rural</label>
                   <select required className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-gray-800 font-medium appearance-none" value={form.producerId} onChange={e => setForm({...form, producerId: e.target.value})}>
@@ -229,25 +214,21 @@ export const UserColeta = () => {
                     {producers.map(p => <option key={p.id} value={p.id}>{p.name} - {p.property}</option>)}
                   </select>
                 </div>
-
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-gray-700 ml-1">Local Exato da Coleta</label>
                   <input required type="text" placeholder="Ex: Talhão 4, Gleba B..." className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-gray-800 font-medium" value={form.location} onChange={e => setForm({...form, location: e.target.value})} />
                 </div>
               </div>
 
-              {/* Bloco 2: Produto e Carga */}
               <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
                 <div className="flex items-center gap-2 mb-2 border-b border-gray-50 pb-3">
                    <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">2</div>
                    <h3 className="font-bold text-gray-800">Carga</h3>
                 </div>
-
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-gray-700 ml-1">Produto / Variedade</label>
                   <input required type="text" placeholder="Ex: Manga Palmer" className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-gray-800 font-medium text-lg" value={form.type} onChange={e => setForm({...form, type: e.target.value})} />
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-700 ml-1">Qtd. Caixas</label>
@@ -260,25 +241,21 @@ export const UserColeta = () => {
                 </div>
               </div>
 
-              {/* Bloco 3: Equipe e Observações */}
               <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
                 <div className="flex items-center gap-2 mb-2 border-b border-gray-50 pb-3">
                    <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">3</div>
                    <h3 className="font-bold text-gray-800">Equipe & Notas</h3>
                 </div>
-
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-gray-700 ml-1">Nome do Carregador (Motorista)</label>
+                  <label className="text-sm font-bold text-gray-700 ml-1">Nome do Carregador</label>
                   <input required type="text" placeholder="Nome de quem vai transportar" className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-gray-800 font-medium" value={form.loaderName} onChange={e => setForm({...form, loaderName: e.target.value})} />
                 </div>
-
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-gray-700 ml-1">Observações (Opcional)</label>
-                  <textarea placeholder="Alguma observação sobre a qualidade, acesso à roça..." rows={3} className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-gray-800 font-medium resize-none" value={form.observations} onChange={e => setForm({...form, observations: e.target.value})} />
+                  <textarea placeholder="Alguma observação sobre a qualidade..." rows={3} className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-gray-800 font-medium resize-none" value={form.observations} onChange={e => setForm({...form, observations: e.target.value})} />
                 </div>
               </div>
 
-              {/* Bloco 4: Fotos */}
               <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -287,24 +264,21 @@ export const UserColeta = () => {
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wider bg-red-50 text-red-600 px-2 py-1 rounded-lg">Obrigatório</span>
                 </div>
-
                 <label className="bg-gray-50 border-2 border-dashed border-gray-300 hover:border-emerald-400 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors w-full group">
                   <input type="file" multiple accept="image/*" className="hidden" onChange={handlePhotoUpload} />
                   <div className="w-14 h-14 bg-white rounded-full shadow-sm flex items-center justify-center text-emerald-600 mb-1 group-hover:scale-110 transition-transform">
                     <ImagePlus size={28} />
                   </div>
                   <span className="font-bold text-gray-700">Tirar Fotos da Carga</span>
-                  <span className="text-xs text-gray-400 font-medium text-center">Abra a câmera ou galeria do celular</span>
+                  <span className="text-xs text-gray-400 font-medium text-center">Abra a câmera ou galeria</span>
                 </label>
-
-                {/* Grid de Previews */}
                 {photos.length > 0 && (
                   <div className="grid grid-cols-3 gap-3 mt-4">
                     {photos.map((photo, idx) => (
                        <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
                          <img src={photo.preview} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                         <button type="button" onClick={() => removePhoto(idx)} className="absolute top-1.5 right-1.5 bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 transition-colors flex items-center justify-center">
+                         <button type="button" onClick={() => removePhoto(idx)} className="absolute top-1.5 right-1.5 bg-red-500 text-white rounded-full p-1.5 shadow-md flex items-center justify-center">
                            <X size={14} />
                          </button>
                        </div>
@@ -313,7 +287,6 @@ export const UserColeta = () => {
                 )}
               </div>
 
-              {/* Botão de Submit Gigante para Mobile */}
               <button 
                 type="submit" 
                 disabled={photos.length === 0}
@@ -332,39 +305,80 @@ export const UserColeta = () => {
 // ---- BENEFICIAMENTO (PASSO 2) ----
 export const UserBeneficiamento = () => {
   const { loads, producers, updateLoad, currentUser } = useAgro();
-  const navigate = useNavigate();
+  
   const pendingLoads = loads.filter(l => l.status === 'coletado');
   
   const [selectedLoadId, setSelectedLoadId] = useState('');
-  const [form, setForm] = useState({ receivedWeight: '', damage: '', discard: '' });
+  const [photos, setPhotos] = useState<{file: File, preview: string}[]>([]);
+  const [form, setForm] = useState({ 
+    receivedWeight: '', 
+    damage: '', 
+    discard: '',
+    observations: '' 
+  });
 
   const selectedLoad = pendingLoads.find(l => l.id === selectedLoadId);
+
+  // Variáveis calculadas em tempo real
+  const fieldWeight = selectedLoad?.collection.grossWeight || 0;
+  const received = Number(form.receivedWeight) || 0;
+  const damage = Number(form.damage) || 0;
+  const discard = Number(form.discard) || 0;
+  const netWeight = Math.max(0, received - damage - discard);
+  const diffWeight = received - fieldWeight;
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newPhotos = Array.from(e.target.files).map(file => ({
+        file,
+        preview: URL.createObjectURL(file) 
+      }));
+      setPhotos(prev => [...prev, ...newPhotos]);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos(prev => {
+      const newArr = [...prev];
+      URL.revokeObjectURL(newArr[index].preview);
+      newArr.splice(index, 1);
+      return newArr;
+    });
+  };
+
+  const closeForm = () => {
+    setSelectedLoadId('');
+    setForm({ receivedWeight: '', damage: '', discard: '', observations: '' });
+    setPhotos([]);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLoad) return;
 
-    const received = Number(form.receivedWeight);
-    const damage = Number(form.damage);
-    const discard = Number(form.discard);
-    const netWeight = received - damage - discard;
-    const diff = selectedLoad.collection.grossWeight - received;
+    const photosEvidence = photos.map((p, i) => ({
+      id: `photo_${Date.now()}_${i}`,
+      url: p.preview,
+      type: 'processing' as const
+    }));
 
     updateLoad(selectedLoad.id, {
       status: 'beneficiado',
       processing: {
         id: `proc_${Date.now()}`,
-        fieldWeight: selectedLoad.collection.grossWeight,
+        fieldWeight: fieldWeight,
         receivedWeight: received,
         damage,
         discard,
         netWeight,
-        weightDifference: diff,
-        photos: []
+        weightDifference: diffWeight,
+        observations: form.observations,
+        photos: photosEvidence
       }
     });
-    alert('Beneficiamento concluído!');
-    navigate('/user/financeiro');
+    
+    toast.success('Beneficiamento concluído e registrado!');
+    closeForm();
   };
 
   if (!currentUser?.permissions?.canProcess) {
@@ -378,78 +392,194 @@ export const UserBeneficiamento = () => {
   }
 
   return (
-    <div className="p-4 pb-20">
+    <div className="p-4 pb-24">
+      {/* Cabeçalho da Lista */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">2. Beneficiamento</h2>
-        <p className="text-gray-500 text-sm">Processamento no barracão</p>
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Beneficiamento</h2>
+        <p className="text-gray-500 text-sm">Conferência de cargas no barracão</p>
       </div>
 
-      {pendingLoads.length === 0 && !selectedLoadId && (
-        <div className="p-8 text-center text-gray-500 mt-10 bg-white rounded-2xl border border-gray-100 border-dashed">
-          <Factory size={48} className="mx-auto text-gray-300 mb-4"/>
-          <p>Nenhuma carga aguardando beneficiamento no momento.</p>
+      {/* Lista de Cargas Pendentes */}
+      {pendingLoads.length === 0 ? (
+        <div className="text-center p-8 bg-white rounded-3xl border border-gray-100 border-dashed shadow-sm mt-10">
+          <Factory size={48} className="mx-auto text-gray-300 mb-4" strokeWidth={1.5} />
+          <h3 className="text-gray-800 font-bold mb-1">Nenhuma carga aguardando</h3>
+          <p className="text-gray-500 text-sm">As cargas coletadas na roça aparecerão aqui para conferência.</p>
         </div>
-      )}
-
-      {!selectedLoadId && pendingLoads.length > 0 && (
+      ) : (
         <div className="space-y-4">
-          <h3 className="font-semibold text-gray-700">Cargas aguardando:</h3>
           {pendingLoads.map(load => {
             const prod = producers.find(p => p.id === load.producerId);
             return (
-              <div key={load.id} onClick={() => setSelectedLoadId(load.id)} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer active:scale-95 transition">
+              <div 
+                key={load.id} 
+                onClick={() => setSelectedLoadId(load.id)} 
+                className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer active:scale-95 transition-all group hover:border-blue-200"
+              >
                 <div>
-                  <p className="font-bold text-gray-800">{prod?.name}</p>
-                  <p className="text-sm text-gray-500">{load.collection.type} - {load.collection.boxes} caixas</p>
-                  <p className="text-xs text-emerald-600 font-medium mt-1">Peso Coleta: {load.collection.grossWeight}kg</p>
+                  <p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Aguardando Conferência</p>
+                  <p className="font-bold text-gray-800 leading-tight">{prod?.name}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                     <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[11px] font-bold">
+                       {load.collection.type}
+                     </span>
+                     <span className="text-xs font-bold text-blue-600">
+                       Roça: {load.collection.grossWeight} kg
+                     </span>
+                  </div>
                 </div>
-                <ChevronRight className="text-gray-300" />
+                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                  <ArrowRight size={20} />
+                </div>
               </div>
             );
           })}
         </div>
       )}
 
+      {/* MODAL / POP-UP MOBILE (FULL SCREEN) - Formulário de Beneficiamento */}
       {selectedLoadId && selectedLoad && (
-        <form onSubmit={handleSubmit} className="space-y-5 animate-in slide-in-from-right-8">
-           <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl flex justify-between items-center">
-             <div>
-               <p className="text-xs text-emerald-600 uppercase font-bold">Carga Selecionada</p>
-               <p className="font-medium text-emerald-900">{producers.find(p => p.id === selectedLoad.producerId)?.name}</p>
-               <p className="text-sm text-emerald-700">Roça: {selectedLoad.collection.grossWeight} kg</p>
-             </div>
-             <button type="button" onClick={() => setSelectedLoadId('')} className="text-emerald-700 text-sm font-bold underline">Trocar</button>
-           </div>
+        <div className="fixed inset-0 z-50 bg-gray-50 flex flex-col animate-in slide-in-from-bottom-full duration-300">
+          
+          <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sticky top-0 z-10 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 tracking-tight flex items-center gap-2">
+               <Scale className="text-blue-600" size={20} /> Conferência
+            </h2>
+            <button onClick={closeForm} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition-colors">
+              <X size={20} />
+            </button>
+          </div>
 
-           <div className="space-y-1">
-             <label className="text-sm font-medium text-gray-700 ml-1">Peso Recebido (kg)</label>
-             <input required type="number" placeholder="0.00" className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 text-lg font-bold" value={form.receivedWeight} onChange={e => setForm({...form, receivedWeight: e.target.value})} />
-           </div>
-
-           <div className="grid grid-cols-2 gap-4">
-             <div className="space-y-1">
-               <label className="text-sm font-medium text-gray-700 ml-1">Avarias (kg)</label>
-               <input required type="number" placeholder="0" className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" value={form.damage} onChange={e => setForm({...form, damage: e.target.value})} />
-             </div>
-             <div className="space-y-1">
-               <label className="text-sm font-medium text-gray-700 ml-1">Descarte (kg)</label>
-               <input required type="number" placeholder="0" className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" value={form.discard} onChange={e => setForm({...form, discard: e.target.value})} />
-             </div>
-           </div>
-
-           <div className="bg-gray-800 text-white p-4 rounded-xl mt-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-400 text-sm">Peso Líquido Calculado:</span>
-                <span className="font-bold text-xl text-emerald-400">
-                  {form.receivedWeight ? Math.max(0, Number(form.receivedWeight) - Number(form.damage) - Number(form.discard)) : 0} kg
-                </span>
+          <div className="flex-1 overflow-y-auto p-4 pb-32 custom-scrollbar">
+            
+            {/* Resumo da Carga Selecionada (Read-Only) */}
+            <div className="bg-blue-50 border border-blue-100 rounded-3xl p-5 mb-6">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-1">Carga Selecionada</p>
+                  <h3 className="font-bold text-blue-900">{producers.find(p => p.id === selectedLoad.producerId)?.name}</h3>
+                </div>
+                <div className="text-right">
+                   <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-1">Peso da Roça</p>
+                   <p className="font-black text-xl text-blue-700">{fieldWeight} <span className="text-sm">kg</span></p>
+                </div>
               </div>
-           </div>
+              <div className="flex items-center gap-2 text-xs font-semibold text-blue-800 bg-blue-100/50 p-2 rounded-lg">
+                <span>{selectedLoad.collection.type}</span> • <span>{selectedLoad.collection.boxes} Caixas</span>
+              </div>
+            </div>
 
-           <button type="submit" className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-2xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-2">
-            <CheckCircle2 /> Finalizar Beneficiamento
-          </button>
-        </form>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              
+              {/* Bloco 1: Pesagem Recebida */}
+              <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+                <div className="flex items-center gap-2 mb-2 border-b border-gray-50 pb-3">
+                   <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">1</div>
+                   <h3 className="font-bold text-gray-800">Pesagem Recebida</h3>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-gray-700 ml-1">Peso na Balança (kg)</label>
+                  <input required type="number" step="0.01" placeholder="0.00" className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-blue-700 font-black text-2xl text-center" value={form.receivedWeight} onChange={e => setForm({...form, receivedWeight: e.target.value})} />
+                </div>
+
+                {/* Diferença de Peso Dinâmica */}
+                {form.receivedWeight && (
+                  <div className={`p-3 rounded-xl flex justify-between items-center text-sm font-bold border ${diffWeight < 0 ? 'bg-red-50 text-red-700 border-red-100' : 'bg-emerald-50 text-emerald-700 border-emerald-100'}`}>
+                    <span>Diferença da Roça:</span>
+                    <span>{diffWeight > 0 ? '+' : ''}{diffWeight.toFixed(2)} kg</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Bloco 2: Perdas e Avarias */}
+              <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+                <div className="flex items-center gap-2 mb-2 border-b border-gray-50 pb-3">
+                   <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">2</div>
+                   <h3 className="font-bold text-gray-800 flex items-center gap-2">Perdas <AlertTriangle size={16} className="text-amber-500"/></h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-gray-700 ml-1">Avarias (kg)</label>
+                    <input required type="number" step="0.01" placeholder="0.00" className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition text-amber-700 font-black text-xl text-center" value={form.damage} onChange={e => setForm({...form, damage: e.target.value})} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-gray-700 ml-1">Descarte (kg)</label>
+                    <input required type="number" step="0.01" placeholder="0.00" className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition text-amber-700 font-black text-xl text-center" value={form.discard} onChange={e => setForm({...form, discard: e.target.value})} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Lousa Dinâmica de Resultado */}
+              <div className="bg-gray-900 rounded-3xl p-6 text-white shadow-xl shadow-gray-900/20 relative overflow-hidden">
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
+                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Peso Líquido Final</p>
+                 <div className="flex items-end gap-2">
+                   <span className="text-5xl font-black tracking-tighter text-emerald-400">{netWeight.toFixed(2)}</span>
+                   <span className="text-xl font-bold text-gray-500 mb-1">kg</span>
+                 </div>
+                 <div className="mt-4 pt-4 border-t border-gray-800 flex justify-between text-xs font-medium text-gray-400">
+                    <span>Recebido: {received} kg</span>
+                    <span>- Perdas: {damage + discard} kg</span>
+                 </div>
+              </div>
+
+              {/* Bloco 3: Observações */}
+              <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-bold text-gray-700 ml-1">Observações da Conferência</label>
+                  <textarea placeholder="Relate o estado da carga, motivos de descarte..." rows={3} className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-gray-800 font-medium resize-none" value={form.observations} onChange={e => setForm({...form, observations: e.target.value})} />
+                </div>
+              </div>
+
+              {/* Bloco 4: Fotos (Obrigatório) */}
+              <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm">3</div>
+                    <h3 className="font-bold text-gray-800">Fotos da Conferência</h3>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-red-50 text-red-600 px-2 py-1 rounded-lg">Obrigatório</span>
+                </div>
+                
+                <p className="text-xs text-gray-500 mb-4 font-medium">Tire fotos da carga na balança e evidências das avarias/descartes.</p>
+
+                <label className="bg-gray-50 border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors w-full group">
+                  <input type="file" multiple accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                  <div className="w-14 h-14 bg-white rounded-full shadow-sm flex items-center justify-center text-blue-600 mb-1 group-hover:scale-110 transition-transform">
+                    <ImagePlus size={28} />
+                  </div>
+                  <span className="font-bold text-gray-700">Adicionar Fotos</span>
+                </label>
+
+                {photos.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 mt-4">
+                    {photos.map((photo, idx) => (
+                       <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
+                         <img src={photo.preview} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
+                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                         <button type="button" onClick={() => removePhoto(idx)} className="absolute top-1.5 right-1.5 bg-red-500 text-white rounded-full p-1.5 shadow-md flex items-center justify-center">
+                           <X size={14} />
+                         </button>
+                       </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Botão de Submit */}
+              <button 
+                type="submit" 
+                disabled={!form.receivedWeight || photos.length === 0}
+                className="w-full bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500 text-white font-black text-lg py-5 rounded-2xl shadow-[0_8px_30px_rgb(37,99,235,0.3)] disabled:shadow-none active:scale-[0.98] transition-all flex items-center justify-center gap-3 mt-8"
+              >
+                <CheckCircle2 size={24} /> 
+                {!form.receivedWeight ? 'Informe a pesagem' : photos.length === 0 ? 'Adicione fotos' : 'Salvar Conferência'}
+              </button>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
