@@ -1,8 +1,8 @@
 import { Company, User, Producer, Load } from '../types';
 
 export const MOCK_COMPANIES: Company[] = [
-  { id: 'comp_1', name: 'AgroSul Exportações', document: '12.345.678/0001-90', status: 'active', plan: 'Enterprise', createdAt: '2023-01-10T00:00:00Z', updatedAt: '2023-01-10T00:00:00Z' },
-  { id: 'comp_2', name: 'Fazendas do Vale', document: '98.765.432/0001-10', status: 'active', plan: 'Pro', createdAt: '2023-03-15T00:00:00Z', updatedAt: '2023-03-15T00:00:00Z' },
+  { id: 'comp_1', name: 'AgroSul Exportações', document: '12.345.678/0001-90', status: 'active', createdAt: '2023-01-10T00:00:00Z', updatedAt: '2023-01-10T00:00:00Z' },
+  { id: 'comp_2', name: 'Fazendas do Vale', document: '98.765.432/0001-10', status: 'active', createdAt: '2023-03-15T00:00:00Z', updatedAt: '2023-03-15T00:00:00Z' },
 ];
 
 export const MOCK_USERS: User[] = [

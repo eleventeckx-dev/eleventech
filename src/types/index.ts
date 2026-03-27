@@ -30,7 +30,6 @@ export type Company = {
   name: string;
   document: string; // CNPJ
   status: 'active' | 'inactive';
-  plan: string;
   createdAt: string;
   updatedAt: string;
 };
