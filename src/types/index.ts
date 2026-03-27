@@ -20,7 +20,7 @@ export type User = {
   email: string;
   role: UserRole;
   avatar?: string;
-  status?: 'active' | 'inactive'; // Adicionado status
+  status?: 'active' | 'inactive';
   permissions?: Permission;
   createdAt: string;
   updatedAt: string;
@@ -31,6 +31,8 @@ export type Company = {
   name: string;
   document: string; // CNPJ
   status: 'active' | 'inactive';
+  logo?: string; // Novo: Logo da empresa
+  primaryColor?: string; // Novo: Cor principal
   createdAt: string;
   updatedAt: string;
 };
