@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Activity, UsersRound, Settings, LogOut, ChevronRight, Tractor } from 'lucide-react';
 import { useAgro } from '../contexts/AgroContext';
 
 const AdminLayout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { currentUser, setCurrentUser } = useAgro();
 
   // Menu atualizado com a aba Produtores
@@ -15,6 +16,11 @@ const AdminLayout = () => {
     { name: 'Usuários', path: '/app/usuarios', icon: UsersRound },
     { name: 'Configurações', path: '/app/configuracoes', icon: Settings },
   ];
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    navigate('/');
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex font-sans text-slate-900">
@@ -68,7 +74,7 @@ const AdminLayout = () => {
               </div>
             </div>
             <button 
-              onClick={() => setCurrentUser(null)} 
+              onClick={handleLogout} 
               className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors bg-white border border-slate-200 hover:border-red-100"
             >
               <LogOut size={16} /> <span className="text-xs font-bold">Sair da Conta</span>
