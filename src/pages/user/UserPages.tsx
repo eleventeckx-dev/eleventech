@@ -22,10 +22,11 @@ export const UserIndexRedirect = () => {
 // COMPONENTES DE UI REUTILIZÁVEIS (PREMIUM)
 // ==========================================
 
+// Removemos a sombra base fixa daqui para passarmos sombras dinâmicas específicas por seção
 const PremiumCard = ({ children, onClick, className = '' }: any) => (
   <div 
     onClick={onClick}
-    className={`bg-white p-5 rounded-3xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] border border-slate-100/50 transition-all ${onClick ? 'cursor-pointer active:scale-[0.98]' : ''} ${className}`}
+    className={`bg-white p-5 rounded-3xl transition-all ${onClick ? 'cursor-pointer active:scale-[0.98]' : ''} ${className}`}
   >
     {children}
   </div>
@@ -149,7 +150,7 @@ export const UserColeta = () => {
 
   const getStatusBadge = (status: string) => {
     switch(status) {
-      case 'coletado': return <span className="bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-sm">No Barracão</span>;
+      case 'coletado': return <span className="bg-blue-50 text-blue-600 border border-blue-100 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-sm">Coletado</span>;
       case 'beneficiado': return <span className="bg-indigo-50 text-indigo-600 border border-indigo-100 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-sm">Beneficiado</span>;
       case 'pagamento_programado': return <span className="bg-amber-50 text-amber-600 border border-amber-100 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-sm">A Pagar</span>;
       case 'pago': return <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap shadow-sm">Concluído</span>;
@@ -176,7 +177,7 @@ export const UserColeta = () => {
         </button>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {visibleLoads.length === 0 ? (
           <EmptyState 
             icon={Truck} 
@@ -189,7 +190,11 @@ export const UserColeta = () => {
             const isMyLoad = load.collection.responsibleId === currentUser?.id;
 
             return (
-              <PremiumCard key={load.id} className="relative overflow-hidden group">
+              <PremiumCard 
+                key={load.id} 
+                // A sombra escura e moderna exigida na borda (shadow destacada com tom slate-900 e borda visível)
+                className="relative overflow-hidden group border border-slate-200 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.25)] hover:shadow-[0_16px_48px_-12px_rgba(15,23,42,0.3)]"
+              >
                 <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-slate-50 to-white rounded-bl-full -z-10"></div>
                 
                 <div className="flex justify-between items-start mb-4">
@@ -222,7 +227,6 @@ export const UserColeta = () => {
                     <span className="flex items-center gap-1.5"><Calendar size={14}/> {new Date(load.createdAt).toLocaleDateString('pt-BR')}</span>
                     <span className="flex items-center gap-1.5"><Clock size={14}/> {new Date(load.createdAt).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
                   </div>
-                  {/* Ponto pulsante extra para destacar atividades bem recentes/pendentes de ação da próxima etapa */}
                   {load.status === 'coletado' && <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] animate-pulse"></span>}
                 </div>
               </PremiumCard>
@@ -393,11 +397,11 @@ export const UserBeneficiamento = () => {
   return (
     <div className="p-4">
       <div className="mb-8">
-        <h2 className="text-[28px] font-black text-slate-900 tracking-tight">Barracão</h2>
+        <h2 className="text-[28px] font-black text-slate-900 tracking-tight">Beneficiamento</h2>
         <p className="text-slate-500 font-medium">Conferência de recebimento</p>
       </div>
 
-      {!hasPermission && <ReadOnlyBanner text="Modo leitura. Você não tem permissão para realizar as conferências no barracão." />}
+      {!hasPermission && <ReadOnlyBanner text="Modo leitura. Você não tem permissão para realizar as conferências no beneficiamento." />}
 
       {pendingLoads.length === 0 ? (
         <EmptyState icon={Factory} title="Pátio Limpo" description="Não há cargas aguardando conferência no momento." />
@@ -409,7 +413,7 @@ export const UserBeneficiamento = () => {
               <PremiumCard 
                 key={load.id} 
                 onClick={() => hasPermission && setSelectedLoadId(load.id)} 
-                className={`flex items-center justify-between group ${!hasPermission ? 'opacity-70' : 'hover:border-blue-200'}`}
+                className={`flex items-center justify-between group border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] ${!hasPermission ? 'opacity-70' : 'hover:border-blue-200'}`}
               >
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 mb-1 tracking-widest uppercase">Aguardando Peso</p>
@@ -560,7 +564,7 @@ export const UserFinanceiro = () => {
   return (
     <div className="p-4">
       <div className="mb-8">
-        <h2 className="text-[28px] font-black text-slate-900 tracking-tight">Acertos</h2>
+        <h2 className="text-[28px] font-black text-slate-900 tracking-tight">Financeiro</h2>
         <p className="text-slate-500 font-medium">Lançamento de valores e pagamentos</p>
       </div>
 
@@ -576,7 +580,7 @@ export const UserFinanceiro = () => {
               <PremiumCard 
                 key={load.id} 
                 onClick={() => hasPermission && setSelectedLoadId(load.id)} 
-                className={`flex items-center justify-between group ${!hasPermission ? 'opacity-70' : 'hover:border-slate-800'}`}
+                className={`flex items-center justify-between group border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] ${!hasPermission ? 'opacity-70' : 'hover:border-slate-800'}`}
               >
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 mb-1 tracking-widest uppercase">Pendente</p>

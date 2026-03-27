@@ -9,8 +9,8 @@ const UserLayout = () => {
 
   const menu = [
     { name: 'Coleta', path: '/user/coleta', icon: Truck },
-    { name: 'Barracão', path: '/user/beneficiamento', icon: Factory },
-    { name: 'Caixa', path: '/user/financeiro', icon: DollarSign },
+    { name: 'Benefic.', path: '/user/beneficiamento', icon: Factory },
+    { name: 'Financ.', path: '/user/financeiro', icon: DollarSign },
     { name: 'Perfil', path: '/user/perfil', icon: User },
   ];
 
