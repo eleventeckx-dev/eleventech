@@ -48,6 +48,16 @@ export type Producer = {
   updatedAt: string;
 };
 
+export type Product = {
+  id: string;
+  companyId: string;
+  name: string;
+  category: string;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type PhotoEvidence = {
   id: string;
   url: string;

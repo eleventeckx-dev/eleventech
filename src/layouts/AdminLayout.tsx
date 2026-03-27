@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Activity, UsersRound, Settings, LogOut, ChevronRight, Tractor } from 'lucide-react';
+import { LayoutDashboard, Activity, UsersRound, Settings, LogOut, ChevronRight, Tractor, Package } from 'lucide-react';
 import { useAgro } from '../contexts/AgroContext';
 
 const AdminLayout = () => {
@@ -8,11 +8,12 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const { currentUser, setCurrentUser } = useAgro();
 
-  // Menu atualizado com a aba Produtores
+  // Menu atualizado com a aba Produtos
   const menu = [
     { name: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard },
     { name: 'Operação', path: '/app/operacao', icon: Activity },
     { name: 'Produtores', path: '/app/produtores', icon: Tractor },
+    { name: 'Produtos', path: '/app/produtos', icon: Package },
     { name: 'Usuários', path: '/app/usuarios', icon: UsersRound },
     { name: 'Configurações', path: '/app/configuracoes', icon: Settings },
   ];

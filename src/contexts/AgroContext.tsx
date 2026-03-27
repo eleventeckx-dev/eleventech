@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
-import { Load, Producer, User, Company } from '../types';
-import { MOCK_LOADS, MOCK_PRODUCERS, MOCK_USERS, MOCK_COMPANIES } from '../data/mock';
+import { Load, Producer, User, Company, Product } from '../types';
+import { MOCK_LOADS, MOCK_PRODUCERS, MOCK_USERS, MOCK_COMPANIES, MOCK_PRODUCTS } from '../data/mock';
 
 interface AgroContextData {
   currentUser: User | null;
@@ -9,6 +9,7 @@ interface AgroContextData {
   producers: Producer[];
   companies: Company[];
   users: User[];
+  products: Product[];
   addLoad: (load: Load) => void;
   updateLoad: (id: string, load: Partial<Load>) => void;
   addProducer: (producer: Producer) => void;
@@ -19,6 +20,9 @@ interface AgroContextData {
   addUser: (user: User) => void;
   updateUser: (id: string, user: Partial<User>) => void;
   deleteUser: (id: string) => void;
+  addProduct: (product: Product) => void;
+  updateProduct: (id: string, product: Partial<Product>) => void;
+  deleteProduct: (id: string) => void;
 }
 
 const AgroContext = createContext<AgroContextData>({} as AgroContextData);
@@ -28,6 +32,7 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loads, setLoads] = useState<Load[]>(MOCK_LOADS);
   const [producers, setProducers] = useState<Producer[]>(MOCK_PRODUCERS);
   const [companies, setCompanies] = useState<Company[]>(MOCK_COMPANIES);
+  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
   
   // Inicializando com status 'active' para os mocks antigos que não tinham
   const [users, setUsers] = useState<User[]>(MOCK_USERS.map(u => ({ ...u, status: u.status || 'active' })));
@@ -46,6 +51,16 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteProducer = (id: string) => {
     setProducers(producers.filter(p => p.id !== id));
+  };
+
+  const addProduct = (product: Product) => setProducts([product, ...products]);
+  
+  const updateProduct = (id: string, updates: Partial<Product>) => {
+    setProducts(products.map(p => p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p));
+  };
+
+  const deleteProduct = (id: string) => {
+    setProducts(products.filter(p => p.id !== id));
   };
 
   const addCompany = (company: Company) => setCompanies([company, ...companies]);
@@ -67,11 +82,12 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AgroContext.Provider value={{ 
       currentUser, setCurrentUser, 
-      loads, producers, companies, users,
+      loads, producers, companies, users, products,
       addLoad, updateLoad, 
       addProducer, updateProducer, deleteProducer,
       addCompany, updateCompany,
-      addUser, updateUser, deleteUser
+      addUser, updateUser, deleteUser,
+      addProduct, updateProduct, deleteProduct
     }}>
       {children}
     </AgroContext.Provider>
