@@ -1,32 +1,45 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAgro } from '../contexts/AgroContext';
-import { MOCK_USERS } from '../data/mock';
-import { ShieldCheck, LogIn, Mail, Lock, Crown, Building2, User } from 'lucide-react';
+import { ShieldCheck, LogIn, Mail, Lock, Crown, Building2, User, Tractor } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Login = () => {
-  const { setCurrentUser } = useAgro();
+  const { users, producers, setCurrentUser } = useAgro();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const performLogin = (targetEmail: string, targetPass: string) => {
-    const user = MOCK_USERS.find(u => u.email.toLowerCase() === targetEmail.toLowerCase());
+    // 1. Tenta achar na lista de Usuários da Plataforma / Empresa
+    const user = users.find(u => u.email.toLowerCase() === targetEmail.toLowerCase());
+    
+    // 2. Tenta achar na lista de Produtores
+    const producer = producers.find(p => p.email?.toLowerCase() === targetEmail.toLowerCase());
     
     if (user && targetPass === '123456') {
       setCurrentUser(user);
       toast.success(`Bem-vindo, ${user.name}!`);
       
-      // Redirecionamento Baseado no Perfil
-      if (user.role === 'super_admin') {
-        navigate('/super-admin/dashboard');
-      } else if (user.role === 'admin') {
-        navigate('/app/dashboard');
-      } else if (user.role === 'collaborator') {
-        // App Operacional Unificado para todos os colaboradores
-        navigate('/user'); 
-      }
+      if (user.role === 'super_admin') navigate('/super-admin/dashboard');
+      else if (user.role === 'admin') navigate('/app/dashboard');
+      else if (user.role === 'collaborator') navigate('/user'); 
+      
+    } else if (producer && targetPass === (producer.password || '123456')) {
+      // Cria um objeto "User" adaptado para o produtor logado
+      setCurrentUser({
+        id: producer.id,
+        companyId: producer.companyId,
+        name: producer.name,
+        email: producer.email || '',
+        role: 'producer',
+        status: 'active',
+        createdAt: producer.createdAt,
+        updatedAt: producer.updatedAt
+      });
+      toast.success(`Olá, ${producer.name}! Bem-vindo ao painel do produtor.`);
+      navigate('/producer/dashboard');
+      
     } else {
       toast.error('E-mail ou senha incorretos.');
     }
@@ -38,10 +51,10 @@ const Login = () => {
   };
 
   const quickAccess = [
+    { name: 'Gestor', email: 'carlos@agrosul.com', icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 hover:bg-blue-100 border-blue-200' },
+    { name: 'Colaborador', email: 'joao@agrosul.com', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200' },
+    { name: 'Produtor', email: 'jose@produtor.com', icon: Tractor, color: 'text-amber-600', bg: 'bg-amber-50 hover:bg-amber-100 border-amber-200' },
     { name: 'Super Admin', email: 'sadmin@agro.com', icon: Crown, color: 'text-purple-600', bg: 'bg-purple-50 hover:bg-purple-100 border-purple-200' },
-    { name: 'Gestor (Admin)', email: 'carlos@agrosul.com', icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 hover:bg-blue-100 border-blue-200' },
-    { name: 'Colaborador (João)', email: 'joao@agrosul.com', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200' },
-    { name: 'Colaborador (Maria)', email: 'maria@agrosul.com', icon: User, color: 'text-amber-600', bg: 'bg-amber-50 hover:bg-amber-100 border-amber-200' },
   ];
 
   return (
@@ -68,7 +81,7 @@ const Login = () => {
                 required 
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="ex: sadmin@agro.com" 
+                placeholder="seu@email.com" 
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
               />
             </div>
@@ -85,7 +98,7 @@ const Login = () => {
                 required 
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="Senha: 123456" 
+                placeholder="Sua senha (padrão: 123456 ou 123)" 
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
               />
             </div>
@@ -102,7 +115,7 @@ const Login = () => {
         <div className="mt-8">
           <div className="flex items-center gap-3 mb-5">
             <div className="h-px bg-slate-200 flex-1"></div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Acesso Rápido (Testes)</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Acesso Rápido (Testes)</span>
             <div className="h-px bg-slate-200 flex-1"></div>
           </div>
           
@@ -112,7 +125,7 @@ const Login = () => {
               return (
                 <button
                   key={idx}
-                  onClick={() => performLogin(item.email, '123456')}
+                  onClick={() => performLogin(item.email, item.email === 'jose@produtor.com' ? '123' : '123456')}
                   type="button"
                   className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all active:scale-95 ${item.bg}`}
                 >

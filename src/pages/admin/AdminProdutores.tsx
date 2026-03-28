@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAgro } from '../../contexts/AgroContext';
 import { Producer } from '../../types';
-import { Tractor, Edit2, Trash2, Plus, Phone, MapPin } from 'lucide-react';
+import { Tractor, Edit2, Trash2, Plus, Phone, MapPin, Mail, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
 const AdminProdutores = () => {
@@ -18,11 +18,13 @@ const AdminProdutores = () => {
     document: '',
     property: '',
     phone: '',
+    email: '',
+    password: '',
   });
 
   const openAddModal = () => {
     setEditingId(null);
-    setForm({ name: '', document: '', property: '', phone: '' });
+    setForm({ name: '', document: '', property: '', phone: '', email: '', password: '' });
     setIsModalOpen(true);
   };
 
@@ -33,6 +35,8 @@ const AdminProdutores = () => {
       document: producer.document,
       property: producer.property,
       phone: producer.phone,
+      email: producer.email || '',
+      password: producer.password || '',
     });
     setIsModalOpen(true);
   };
@@ -70,7 +74,7 @@ const AdminProdutores = () => {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Gestão de Produtores</h2>
-          <p className="text-sm text-slate-500 mt-1">Cadastre e gerencie os parceiros e fornecedores rurais.</p>
+          <p className="text-sm text-slate-500 mt-1">Cadastre os produtores para que eles possam acompanhar suas cargas.</p>
         </div>
         <button 
           onClick={openAddModal}
@@ -85,8 +89,7 @@ const AdminProdutores = () => {
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="px-6 py-4 text-sm font-semibold text-slate-600">Produtor</th>
-              <th className="px-6 py-4 text-sm font-semibold text-slate-600">Propriedade</th>
-              <th className="px-6 py-4 text-sm font-semibold text-slate-600">Contato</th>
+              <th className="px-6 py-4 text-sm font-semibold text-slate-600">Contato / Acesso</th>
               <th className="px-6 py-4 text-sm font-semibold text-slate-600 text-right">Ações</th>
             </tr>
           </thead>
@@ -95,25 +98,30 @@ const AdminProdutores = () => {
               <tr key={producer.id} className="hover:bg-slate-50/50 transition">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold border border-emerald-100">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold border border-emerald-100 shrink-0">
                       <Tractor size={20} />
                     </div>
                     <div>
                       <p className="font-bold text-slate-900 leading-tight">{producer.name}</p>
-                      <p className="text-xs text-slate-500">Doc: {producer.document}</p>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
+                        <MapPin size={12} /> {producer.property}
+                      </div>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <MapPin size={16} className="text-slate-400" />
-                    {producer.property}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <Phone size={16} className="text-slate-400" />
-                    {producer.phone}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Phone size={14} className="text-slate-400" />
+                      {producer.phone}
+                    </div>
+                    {producer.email ? (
+                      <div className="flex items-center gap-2 text-sm text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-md w-fit">
+                        <Mail size={14} /> {producer.email}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md w-fit">Sem acesso web</div>
+                    )}
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -138,7 +146,7 @@ const AdminProdutores = () => {
             ))}
             {companyProducers.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
+                <td colSpan={3} className="px-6 py-12 text-center text-slate-500">
                   Nenhum produtor encontrado.
                 </td>
               </tr>
@@ -150,31 +158,50 @@ const AdminProdutores = () => {
       {/* Modal de Cadastro / Edição */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-2xl w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
               <Tractor className="text-emerald-600" />
               {editingId ? 'Editar Produtor' : 'Novo Produtor'}
             </h3>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Nome Completo / Razão Social</label>
-                <input required type="text" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Ex: José da Silva" />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="text-sm font-semibold text-slate-700">Nome Completo / Razão Social</label>
+                  <input required type="text" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Ex: José da Silva" />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-slate-700">CPF ou CNPJ</label>
+                  <input required type="text" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.document} onChange={e => setForm({...form, document: e.target.value})} placeholder="000.000.000-00" />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Telefone para Contato</label>
+                  <input required type="text" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="(00) 00000-0000" />
+                </div>
+
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="text-sm font-semibold text-slate-700">Nome da Propriedade (Referência de Local)</label>
+                  <input required type="text" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.property} onChange={e => setForm({...form, property: e.target.value})} placeholder="Ex: Fazenda Esperança" />
+                </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">CPF ou CNPJ</label>
-                <input required type="text" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.document} onChange={e => setForm({...form, document: e.target.value})} placeholder="000.000.000-00" />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Nome da Propriedade</label>
-                <input required type="text" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.property} onChange={e => setForm({...form, property: e.target.value})} placeholder="Ex: Fazenda Esperança" />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Telefone para Contato</label>
-                <input required type="text" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="(00) 00000-0000" />
+              <div className="border-t border-slate-100 pt-6">
+                <h4 className="font-bold text-slate-800 mb-1 flex items-center gap-2"><Lock size={16} className="text-slate-400"/> Acesso ao Painel do Produtor</h4>
+                <p className="text-xs text-slate-500 mb-4">Preencha o e-mail e senha para que o produtor possa acompanhar suas cargas e fechamentos financeiros.</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-slate-700">E-mail de Login</label>
+                    <input type="email" className="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="produtor@email.com" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Senha de Acesso</label>
+                    <input type="text" className="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder="Defina uma senha" />
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-3 pt-4">

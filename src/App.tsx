@@ -11,6 +11,7 @@ import { AgroProvider } from "./contexts/AgroContext";
 import SuperAdminLayout from "./layouts/SuperAdminLayout";
 import AdminLayout from "./layouts/AdminLayout";
 import UserLayout from "./layouts/UserLayout";
+import ProducerLayout from "./layouts/ProducerLayout";
 
 // Pages
 import Login from "./pages/Login";
@@ -29,6 +30,7 @@ import {
   UserFinanceiro, 
   UserPerfil 
 } from "./pages/user/UserPages";
+import ProducerDashboard from "./pages/producer/ProducerDashboard";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +70,12 @@ const App = () => (
               <Route path="beneficiamento" element={<UserBeneficiamento />} />
               <Route path="financeiro" element={<UserFinanceiro />} />
               <Route path="perfil" element={<UserPerfil />} />
+            </Route>
+
+            {/* PRODUCER ROUTES - Portal Simples */}
+            <Route path="/producer" element={<ProducerLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<ProducerDashboard />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

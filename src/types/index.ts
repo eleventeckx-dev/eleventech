@@ -1,4 +1,4 @@
-export type UserRole = 'super_admin' | 'admin' | 'collaborator';
+export type UserRole = 'super_admin' | 'admin' | 'collaborator' | 'producer';
 
 export type Permission = {
   id: string;
@@ -31,8 +31,8 @@ export type Company = {
   name: string;
   document: string; // CNPJ
   status: 'active' | 'inactive';
-  logo?: string; // Novo: Logo da empresa
-  primaryColor?: string; // Novo: Cor principal
+  logo?: string; 
+  primaryColor?: string; 
   createdAt: string;
   updatedAt: string;
 };
@@ -44,6 +44,8 @@ export type Producer = {
   document: string; // CPF/CNPJ
   property: string;
   phone: string;
+  email?: string; // Novo: Login
+  password?: string; // Novo: Senha
   createdAt: string;
   updatedAt: string;
 };
@@ -71,8 +73,8 @@ export type CollectionRecord = {
   category: string;
   type: string;
   boxes: number;
-  grossWeight: number; // Peso bruto (kg)
-  loaderName?: string; // Novo: Nome do carregador
+  grossWeight: number; 
+  loaderName?: string; 
   responsibleId: string;
   observations?: string;
   photos: PhotoEvidence[];
@@ -80,12 +82,12 @@ export type CollectionRecord = {
 
 export type ProcessingRecord = {
   id: string;
-  fieldWeight: number; // Peso roça
-  receivedWeight: number; // Peso recebido no barracão
-  damage: number; // Avarias (kg)
-  discard: number; // Descarte (kg)
-  netWeight: number; // Peso líquido (kg) - Calculado
-  weightDifference: number; // Diferença (kg) - Calculado
+  fieldWeight: number; 
+  receivedWeight: number; 
+  damage: number; 
+  discard: number; 
+  netWeight: number; 
+  weightDifference: number; 
   observations?: string;
   photos: PhotoEvidence[];
 };
@@ -95,10 +97,10 @@ export type FinancialRecord = {
   netWeight: number;
   pricePerKg: number;
   discounts: number;
-  grossValue: number; // Calculado
-  finalValue: number; // Calculado
+  grossValue: number; 
+  finalValue: number; 
   scheduledPaymentDate: string;
-  observations?: string; // Novo: Notas do financeiro
+  observations?: string; 
 };
 
 export type PaymentRecord = {

@@ -6,10 +6,7 @@ export const MOCK_COMPANIES: Company[] = [
 ];
 
 export const MOCK_USERS: User[] = [
-  // Super Admin atualizado conforme solicitado
   { id: 'usr_sa1', name: 'Plataforma Admin', email: 'sadmin@agro.com', role: 'super_admin', createdAt: '2023-01-01T00:00:00Z', updatedAt: '2023-01-01T00:00:00Z' },
-  
-  // Demais usuários para testes
   { id: 'usr_a1', companyId: 'comp_1', name: 'Carlos Gerente', email: 'carlos@agrosul.com', role: 'admin', createdAt: '2023-01-10T00:00:00Z', updatedAt: '2023-01-10T00:00:00Z' },
   { 
     id: 'usr_c1', companyId: 'comp_1', name: 'João Coletor', email: 'joao@agrosul.com', role: 'collaborator', 
@@ -24,8 +21,8 @@ export const MOCK_USERS: User[] = [
 ];
 
 export const MOCK_PRODUCERS: Producer[] = [
-  { id: 'prod_1', companyId: 'comp_1', name: 'José da Silva', document: '111.222.333-44', property: 'Sítio Boa Vista', phone: '(11) 99999-1111', createdAt: '2023-02-01T00:00:00Z', updatedAt: '2023-02-01T00:00:00Z' },
-  { id: 'prod_2', companyId: 'comp_1', name: 'Antônio Santos', document: '222.333.444-55', property: 'Fazenda Esperança', phone: '(11) 98888-2222', createdAt: '2023-02-05T00:00:00Z', updatedAt: '2023-02-05T00:00:00Z' },
+  { id: 'prod_1', companyId: 'comp_1', name: 'José da Silva', document: '111.222.333-44', property: 'Sítio Boa Vista', phone: '(11) 99999-1111', email: 'jose@produtor.com', password: '123', createdAt: '2023-02-01T00:00:00Z', updatedAt: '2023-02-01T00:00:00Z' },
+  { id: 'prod_2', companyId: 'comp_1', name: 'Antônio Santos', document: '222.333.444-55', property: 'Fazenda Esperança', phone: '(11) 98888-2222', email: 'antonio@produtor.com', password: '123', createdAt: '2023-02-05T00:00:00Z', updatedAt: '2023-02-05T00:00:00Z' },
 ];
 
 export const MOCK_PRODUCTS: Product[] = [
