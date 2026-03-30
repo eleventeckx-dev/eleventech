@@ -1,4 +1,4 @@
-export type UserRole = 'super_admin' | 'admin' | 'collaborator' | 'producer';
+export type UserRole = 'maestro' | 'admin' | 'collaborator' | 'producer';
 
 export type Permission = {
   id: string;
@@ -22,6 +22,8 @@ export type User = {
   avatar?: string;
   status?: 'active' | 'inactive';
   permissions?: Permission;
+  coinsBalance?: number;
+  xpTotal?: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -31,8 +33,11 @@ export type Company = {
   name: string;
   document: string; // CNPJ
   status: 'active' | 'inactive';
+  slug?: string;
   logo?: string; 
   primaryColor?: string; 
+  secondaryColor?: string;
+  isGradient?: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -41,9 +46,10 @@ export type Producer = {
   id: string;
   companyId: string;
   name: string;
-  document: string; // CPF/CNPJ
+  document?: string; // CPF/CNPJ
   property: string;
   phone: string;
+  avatar?: string;
   email?: string; // Novo: Login
   password?: string; // Novo: Senha
   createdAt: string;
@@ -86,8 +92,13 @@ export type ProcessingRecord = {
   receivedWeight: number; 
   damage: number; 
   discard: number; 
+  greenWeight: number;          // Quantidade de produtos verdes (informativo)
   netWeight: number; 
-  weightDifference: number; 
+  weightDifference: number;
+  // Destinação do peso líquido
+  stockWeight: number;          // Vai para estoque (maturação)
+  productionWeight: number;     // Vai para produção (financeiro)
+  bulkSaleWeight: number;       // Vai para venda a granel (financeiro com tag)
   observations?: string;
   photos: PhotoEvidence[];
 };
@@ -95,17 +106,21 @@ export type ProcessingRecord = {
 export type FinancialRecord = {
   id: string;
   netWeight: number;
-  pricePerKg: number;
+  productionWeight?: number;
+  bulkWeight?: number;
+  pricePerKg: number; 
   discounts: number;
   grossValue: number; 
   finalValue: number; 
   scheduledPaymentDate: string;
+  saleType?: 'producao' | 'granel' | 'misto';  // Origem: produção normal, venda a granel ou mista
   observations?: string; 
 };
 
 export type PaymentRecord = {
   id: string;
   paymentDate: string;
+  comprovanteUrl?: string;
   observations?: string;
 };
 
@@ -122,4 +137,15 @@ export type Load = {
   payment?: PaymentRecord;
   createdAt: string;
   updatedAt: string;
+};
+
+export type Lead = {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  operationSize: string;
+  painPoint?: string;
+  status: 'new' | 'contacted' | 'converted';
+  createdAt: string;
 };

@@ -1,0 +1,8 @@
+﻿LOGIN ADMIN OK
+Email: admin@ent.com
+ID: 30223475-277c-453c-b1fb-c11a1f1367f8
+app_metadata.role: 
+app_metadata.companyId: 
+user_metadata.role: admin
+user_metadata.companyId: 98c44120-9744-4dfd-abf1-7e2a3978b550
+user_metadata.name: Admin ENT

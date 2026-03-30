@@ -3,6 +3,7 @@ import { useAgro } from '../../contexts/AgroContext';
 import { Producer } from '../../types';
 import { Tractor, Edit2, Trash2, Plus, Phone, MapPin, Mail, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { ImageUpload } from '../../components/ImageUpload';
 
 const AdminProdutores = () => {
   const { producers, currentUser, addProducer, updateProducer, deleteProducer } = useAgro();
@@ -15,7 +16,6 @@ const AdminProdutores = () => {
   
   const [form, setForm] = useState({
     name: '',
-    document: '',
     property: '',
     phone: '',
     email: '',
@@ -24,7 +24,7 @@ const AdminProdutores = () => {
 
   const openAddModal = () => {
     setEditingId(null);
-    setForm({ name: '', document: '', property: '', phone: '', email: '', password: '' });
+    setForm({ name: '', property: '', phone: '', email: '', password: '' });
     setIsModalOpen(true);
   };
 
@@ -32,7 +32,6 @@ const AdminProdutores = () => {
     setEditingId(producer.id);
     setForm({
       name: producer.name,
-      document: producer.document,
       property: producer.property,
       phone: producer.phone,
       email: producer.email || '',
@@ -41,25 +40,28 @@ const AdminProdutores = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingId) {
-      updateProducer(editingId, form);
-      toast.success('Produtor atualizado com sucesso!');
-    } else {
-      const newProducer: Producer = {
-        id: `prod_${Date.now()}`,
-        companyId: currentUser?.companyId || '',
-        ...form,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      addProducer(newProducer);
-      toast.success('Produtor cadastrado com sucesso!');
+    try {
+      if (editingId) {
+        await updateProducer(editingId, form);
+        toast.success('Produtor atualizado com sucesso!');
+      } else {
+        const newProducer: Producer = {
+          id: crypto.randomUUID(), // Temporario, será sobrescrito pelo ID do auth no backend
+          companyId: currentUser?.companyId || '',
+          ...form,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        await addProducer(newProducer);
+        toast.success('Produtor cadastrado com sucesso!');
+      }
+      setIsModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao salvar o produtor.');
     }
-    
-    setIsModalOpen(false);
   };
 
   const handleDelete = (id: string) => {
@@ -173,11 +175,6 @@ const AdminProdutores = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">CPF ou CNPJ</label>
-                  <input required type="text" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.document} onChange={e => setForm({...form, document: e.target.value})} placeholder="000.000.000-00" />
-                </div>
-
-                <div className="space-y-1.5">
                   <label className="text-sm font-semibold text-slate-700">Telefone para Contato</label>
                   <input required type="text" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="(00) 00000-0000" />
                 </div>
@@ -199,7 +196,7 @@ const AdminProdutores = () => {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold text-slate-700">Senha de Acesso</label>
-                    <input type="text" className="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder="Defina uma senha" />
+                    <input type="password" className="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder="Defina uma senha" />
                   </div>
                 </div>
               </div>

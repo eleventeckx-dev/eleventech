@@ -10,8 +10,8 @@ import { toast } from 'sonner';
 const AdminUsuarios = () => {
   const { users, currentUser, addUser, updateUser, deleteUser } = useAgro();
   
-  // Filtra apenas os usuários da mesma empresa (esconde Super Admins)
-  const companyUsers = users.filter(u => u.companyId === currentUser?.companyId && u.role !== 'super_admin');
+  // Filtra apenas os usuários da mesma empresa (esconde Maestros)
+  const companyUsers = users.filter(u => u.companyId === currentUser?.companyId && u.role !== 'maestro');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -19,6 +19,7 @@ const AdminUsuarios = () => {
   const [form, setForm] = useState({
     name: '',
     email: '',
+    password: '',
     role: 'collaborator' as UserRole,
     permissions: {
       canCollect: false,
@@ -32,7 +33,7 @@ const AdminUsuarios = () => {
   const openAddModal = () => {
     setEditingId(null);
     setForm({ 
-      name: '', email: '', role: 'collaborator',
+      name: '', email: '', password: '', role: 'collaborator',
       permissions: { canCollect: false, canProcess: false, canManageFinancial: false, canMarkPayment: false, canViewReports: false }
     });
     setIsModalOpen(true);
@@ -43,15 +44,25 @@ const AdminUsuarios = () => {
     setForm({
       name: user.name,
       email: user.email,
+      password: '',
       role: user.role,
       permissions: user.permissions || { canCollect: false, canProcess: false, canManageFinancial: false, canMarkPayment: false, canViewReports: false }
     });
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!editingId && !form.password) {
+      toast.error('Informe uma senha inicial para o novo usuário.');
+      return;
+    }
+    if (form.password && form.password.length < 6) {
+      toast.error('A senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+
     const permissionsData = form.role === 'collaborator' ? {
       id: `perm_${Date.now()}`,
       companyId: currentUser?.companyId || '',
@@ -61,42 +72,53 @@ const AdminUsuarios = () => {
       updatedAt: new Date().toISOString(),
     } : undefined;
 
-    if (editingId) {
-      updateUser(editingId, { 
-        name: form.name, 
-        email: form.email, 
-        role: form.role,
-        permissions: permissionsData
-      });
-      toast.success('Usuário atualizado com sucesso!');
-    } else {
-      const newUser: User = {
-        id: `usr_${Date.now()}`,
-        companyId: currentUser?.companyId,
-        name: form.name,
-        email: form.email,
-        role: form.role,
-        status: 'active',
-        permissions: permissionsData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      addUser(newUser);
-      toast.success('Usuário criado com sucesso!');
+    try {
+      if (editingId) {
+        await updateUser(editingId, { 
+          name: form.name, 
+          email: form.email, 
+          role: form.role,
+          permissions: permissionsData as any
+        }, form.password ? form.password : undefined);
+        toast.success('Usuário atualizado com sucesso!');
+      } else {
+        const newUser: User = {
+          id: `usr_${Date.now()}`,
+          companyId: currentUser?.companyId,
+          name: form.name,
+          email: form.email,
+          role: form.role,
+          status: 'active',
+          permissions: permissionsData as any,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as User;
+        await addUser(newUser, form.password);
+        toast.success('Usuário criado com sucesso!');
+      }
+      setIsModalOpen(false);
+    } catch (error: any) {
+      toast.error(error.message || 'Falha na operação técnica.');
     }
-    
-    setIsModalOpen(false);
   };
 
-  const toggleStatus = (id: string, currentStatus: string | undefined) => {
-    updateUser(id, { status: currentStatus === 'active' ? 'inactive' : 'active' });
-    toast.info('Status atualizado.');
+  const toggleStatus = async (id: string, currentStatus: string | undefined) => {
+    try {
+      await updateUser(id, { status: currentStatus === 'active' ? 'inactive' : 'active' });
+      toast.info('Status atualizado.');
+    } catch (err: any) {
+      toast.error('Falha ao atualizar status');
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este usuário?')) {
-      deleteUser(id);
-      toast.success('Usuário excluído!');
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Tem certeza que deseja inativar/excluir este acesso da plataforma?')) {
+      try {
+        await deleteUser(id);
+        toast.success('Usuário inativado.');
+      } catch (err: any) {
+        toast.error('Falha ao inativar acesso.');
+      }
     }
   };
 
@@ -130,8 +152,12 @@ const AdminUsuarios = () => {
               <tr key={user.id} className={`hover:bg-slate-50/50 transition ${user.status === 'inactive' ? 'opacity-60' : ''}`}>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border border-emerald-200">
-                      {user.name.charAt(0)}
+                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border border-emerald-200 overflow-hidden shrink-0">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        user.name.charAt(0)
+                      )}
                     </div>
                     <div>
                       <p className="font-bold text-slate-900 leading-tight">{user.name}</p>
@@ -226,6 +252,11 @@ const AdminUsuarios = () => {
                 <div className="space-y-1.5 md:col-span-2">
                   <label className="text-sm font-semibold text-slate-700">E-mail de Acesso</label>
                   <input required type="email" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="joao@empresa.com" />
+                </div>
+
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="text-sm font-semibold text-slate-700">Senha de Acesso {editingId && <span className="text-slate-400 font-normal ml-1">(opcional)</span>}</label>
+                  <input required={!editingId} type="text" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder={editingId ? "Deixe vazio para manter a mesma" : "Mínimo 6 caracteres"} />
                 </div>
 
                 <div className="space-y-1.5 md:col-span-2">

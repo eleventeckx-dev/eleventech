@@ -1,15 +1,22 @@
 import React from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Building2, ShieldCheck, LogOut } from 'lucide-react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Building2, ShieldCheck, LogOut, Users2 } from 'lucide-react';
 import { useAgro } from '../contexts/AgroContext';
 
 const SuperAdminLayout = () => {
   const location = useLocation();
-  const { currentUser, setCurrentUser } = useAgro();
+  const navigate = useNavigate();
+  const { currentUser, logout } = useAgro();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   const menu = [
     { name: 'Dashboard', path: '/super-admin/dashboard', icon: LayoutDashboard },
     { name: 'Empresas', path: '/super-admin/companies', icon: Building2 },
+    { name: 'Leads', path: '/super-admin/leads', icon: Users2 },
   ];
 
   return (
@@ -18,7 +25,7 @@ const SuperAdminLayout = () => {
       <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col">
         <div className="h-16 flex items-center px-6 border-b border-slate-800">
           <span className="text-xl font-bold text-white tracking-wider flex items-center gap-2">
-            <ShieldCheck className="text-emerald-500" /> AgroFlow <span className="text-xs text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded ml-2">PLATAFORMA</span>
+            <ShieldCheck className="text-emerald-500" /> Eleven Tech <span className="text-xs text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded ml-2">PLATAFORMA</span>
           </span>
         </div>
         <div className="p-4 flex-1">
@@ -52,9 +59,9 @@ const SuperAdminLayout = () => {
               <p className="text-xs text-slate-500 truncate">{currentUser?.email}</p>
             </div>
           </div>
-          <Link to="/" onClick={() => setCurrentUser(null)} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+          <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
             <LogOut size={18} /> <span className="text-sm">Sair</span>
-          </Link>
+          </button>
         </div>
       </aside>
       

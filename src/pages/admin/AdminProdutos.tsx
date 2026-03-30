@@ -3,6 +3,7 @@ import { useAgro } from '../../contexts/AgroContext';
 import { Product } from '../../types';
 import { Package, Edit2, Trash2, Plus, Image as ImageIcon, Camera } from 'lucide-react';
 import { toast } from 'sonner';
+import { ImageUpload } from '../../components/ImageUpload';
 
 const AdminProdutos = () => {
   const { products, currentUser, addProduct, updateProduct, deleteProduct } = useAgro();
@@ -35,32 +36,28 @@ const AdminProdutos = () => {
     setIsModalOpen(true);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const url = URL.createObjectURL(e.target.files[0]);
-      setForm({ ...form, imageUrl: url });
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingId) {
-      updateProduct(editingId, form);
-      toast.success('Produto atualizado com sucesso!');
-    } else {
-      const newProduct: Product = {
-        id: `prod_item_${Date.now()}`,
-        companyId: currentUser?.companyId || '',
-        ...form,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      addProduct(newProduct);
-      toast.success('Produto cadastrado com sucesso!');
+    try {
+      if (editingId) {
+        await updateProduct(editingId, form);
+        toast.success('Produto atualizado com sucesso!');
+      } else {
+        const newProduct: Product = {
+          id: crypto.randomUUID(),
+          companyId: currentUser?.companyId || '',
+          ...form,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        await addProduct(newProduct);
+        toast.success('Produto cadastrado com sucesso!');
+      }
+      setIsModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao salvar o produto.');
     }
-    
-    setIsModalOpen(false);
   };
 
   const handleDelete = (id: string) => {
@@ -158,23 +155,14 @@ const AdminProdutos = () => {
             
             <form onSubmit={handleSubmit} className="space-y-5">
               
-              <div className="flex flex-col items-center justify-center mb-6">
-                <label className="relative group cursor-pointer w-24 h-24 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-300 hover:border-emerald-500 flex flex-col items-center justify-center overflow-hidden transition-all">
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                  {form.imageUrl ? (
-                    <>
-                      <img src={form.imageUrl} alt="Preview" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <Camera size={24} className="text-white" />
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-slate-400 flex flex-col items-center group-hover:text-emerald-500 transition-colors">
-                      <ImageIcon size={28} className="mb-1" />
-                      <span className="text-[10px] font-bold uppercase">Foto</span>
-                    </div>
-                  )}
-                </label>
+              <div className="flex flex-col gap-2 mb-6">
+                <label className="text-sm font-semibold text-slate-700">Foto da Cultura/Produto</label>
+                <div className="w-full">
+                  <ImageUpload 
+                    value={form.imageUrl}
+                    onChange={(base64) => setForm({...form, imageUrl: base64})}
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">

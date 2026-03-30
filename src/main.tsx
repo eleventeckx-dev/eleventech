@@ -1,5 +1,9 @@
 import { createRoot } from "react-dom/client";
+import { registerSW } from "virtual:pwa-register";
 import App from "./App.tsx";
 import "./globals.css";
+
+// Auto-register service worker for PWA
+registerSW({ immediate: true });
 
 createRoot(document.getElementById("root")!).render(<App />);

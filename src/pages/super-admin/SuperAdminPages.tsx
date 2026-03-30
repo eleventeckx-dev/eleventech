@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAgro } from '../../contexts/AgroContext';
-import { Building2, Plus, CheckCircle2, XCircle, Edit2 } from 'lucide-react';
+import { Building2, Plus, CheckCircle2, XCircle, Edit2, Users2, Phone, MessageSquare, Clock, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
 // ---- DASHBOARD SUPER ADMIN ----
@@ -46,43 +46,58 @@ export const SADashboard = () => {
 
 // ---- GESTÃO DE EMPRESAS ----
 export const SACompanies = () => {
-  const { companies, addCompany, updateCompany } = useAgro();
+  const { companies, users, addCompany, updateCompany } = useAgro();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: '', document: '' });
+  const [form, setForm] = useState({ name: '', document: '', adminName: '', adminEmail: '', adminPassword: '' });
 
   const openAddModal = () => {
     setEditingId(null);
-    setForm({ name: '', document: '' });
+    setForm({ name: '', document: '', adminName: '', adminEmail: '', adminPassword: '' });
     setIsModalOpen(true);
   };
 
-  const openEditModal = (company: any) => {
+  const openEditModal = (company: { id: string; name: string; document: string }) => {
     setEditingId(company.id);
-    setForm({ name: company.name, document: company.document });
+    
+    // Buscar o admin dessa empresa no banco (contexto)
+    const companyAdmin = users.find(u => u.companyId === company.id && u.role === 'admin');
+    
+    setForm({ 
+      name: company.name, 
+      document: company.document, 
+      adminName: companyAdmin?.name || '', 
+      adminEmail: companyAdmin?.email || '',
+      adminPassword: (companyAdmin as any)?.password || ''
+    });
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingId) {
-      updateCompany(editingId, { name: form.name, document: form.document });
-      toast.success('Empresa atualizada com sucesso!');
-    } else {
-      const newCompany = {
-        id: `comp_${Date.now()}`,
-        name: form.name,
-        document: form.document,
-        status: 'active' as const,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      addCompany(newCompany);
-      toast.success('Empresa cadastrada com sucesso!');
+    try {
+      if (editingId) {
+        await updateCompany(editingId, { name: form.name, document: form.document }, form.adminName, form.adminEmail, form.adminPassword);
+        toast.success('Dados da empresa e admin atualizados!');
+      } else {
+        const newCompany = {
+          id: crypto.randomUUID(),
+          name: form.name,
+          document: form.document,
+          status: 'active' as const,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        // Passamos os dados do admin como argumentos extras (Incluindo Senha para a Edge Function)
+        await addCompany(newCompany, form.adminName, form.adminEmail, form.adminPassword);
+        toast.success('Empresa e Acesso do Gestor criados!');
+      }
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error('Erro ao salvar empresa:', error.message);
+      toast.error('Erro ao salvar empresa. Verifique as permissões.');
     }
-    
-    setIsModalOpen(false);
   };
 
   const toggleStatus = (id: string, currentStatus: string) => {
@@ -182,8 +197,51 @@ export const SACompanies = () => {
                   className="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none" 
                   value={form.document} 
                   onChange={e => setForm({...form, document: e.target.value})} 
+                placeholder="00.000.000/0000-00"
                 />
               </div>
+
+              <div className="pt-4 border-t border-slate-100 space-y-4">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  {editingId ? 'Gerenciar Gestor da Empresa' : 'Acesso do Gestor Inicial'}
+                </p>
+                <div>
+                  <label className="text-sm font-medium text-slate-700 block mb-1">Nome do Gestor</label>
+                  <input 
+                    required 
+                    type="text" 
+                    className="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-green-500 outline-none" 
+                    value={form.adminName} 
+                    onChange={e => setForm({...form, adminName: e.target.value})} 
+                    placeholder="Nome completo"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 block mb-1">E-mail (Login)</label>
+                    <input 
+                      required 
+                      type="email" 
+                      className="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-green-500 outline-none" 
+                      value={form.adminEmail} 
+                      onChange={e => setForm({...form, adminEmail: e.target.value})} 
+                      placeholder="gestor@empresa.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 block mb-1">Senha de Acesso</label>
+                    <input 
+                      required={!editingId} 
+                      type="text" 
+                      className="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-green-500 outline-none" 
+                      value={form.adminPassword} 
+                      onChange={e => setForm({...form, adminPassword: e.target.value})} 
+                      placeholder={editingId ? "Deixe em branco para manter" : "Mín. 6 caracteres"}
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="flex gap-3 mt-8">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition">Cancelar</button>
                 <button type="submit" className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/30">
@@ -194,6 +252,157 @@ export const SACompanies = () => {
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+// ---- GESTÃO DE LEADS (MKT/SALES) ----
+export const SALeads = () => {
+  const { leads, updateLeadStatus } = useAgro();
+  const [filter, setFilter] = useState('');
+
+  const filteredLeads = leads.filter(l => 
+    l.name.toLowerCase().includes(filter.toLowerCase()) || 
+    l.email?.toLowerCase().includes(filter.toLowerCase()) ||
+    l.phone?.includes(filter)
+  );
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'new': return <span className="bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-tight">Novo</span>;
+      case 'contacted': return <span className="bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-tight">Em Contato</span>;
+      case 'converted': return <span className="bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-tight">Convertido</span>;
+      default: return null;
+    }
+  };
+
+  const notifyMaestro = (id: string, status: any) => {
+    updateLeadStatus(id, status);
+    toast.success('Status do Lead Atualizado!');
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-black text-slate-800">Pipeline de Vendas</h2>
+          <p className="text-sm text-slate-500 font-medium">Contatos recebidos pela Landing Page da ElevenTech</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden px-3 items-center gap-2">
+            <Filter size={16} className="text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Buscar interessado..." 
+              className="py-2.5 outline-none text-sm text-slate-600 bg-transparent w-48"
+              value={filter}
+              onChange={e => setFilter(e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-6 mb-8">
+        <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
+          <p className="text-xs font-black text-blue-600 uppercase tracking-widest mb-1">Novos Leads</p>
+          <h3 className="text-3xl font-black text-blue-900">{leads.filter(l => l.status === 'new').length}</h3>
+        </div>
+        <div className="bg-amber-50/50 p-6 rounded-2xl border border-amber-100">
+          <p className="text-xs font-black text-amber-600 uppercase tracking-widest mb-1">Em Negociação</p>
+          <h3 className="text-3xl font-black text-amber-900">{leads.filter(l => l.status === 'contacted').length}</h3>
+        </div>
+        <div className="bg-emerald-50/50 p-6 rounded-2xl border border-emerald-100">
+          <p className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-1">Conversões</p>
+          <h3 className="text-3xl font-black text-emerald-900">{leads.filter(l => l.status === 'converted').length}</h3>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-200">
+              <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Interessado</th>
+              <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Operação</th>
+              <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Maior Dor</th>
+              <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Status</th>
+              <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {filteredLeads.length > 0 ? filteredLeads.map(lead => (
+              <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors group">
+                <td className="px-6 py-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">
+                      {lead.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900 leading-tight">{lead.name}</p>
+                      <div className="flex flex-col gap-1 mt-1">
+                        <p className="text-[10px] text-slate-500 flex items-center gap-1 font-medium">
+                          <Phone size={10} /> {lead.phone}
+                        </p>
+                        {lead.email && (
+                          <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                            <Filter size={10} /> {lead.email}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-5">
+                  <span className="text-sm font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded-lg">
+                    {lead.operationSize} cargas/dia
+                  </span>
+                </td>
+                <td className="px-6 py-5">
+                  <p className="text-sm text-slate-700 max-w-xs truncate italic">"{lead.painPoint || 'Não informado'}"</p>
+                </td>
+                <td className="px-6 py-5">
+                  {getStatusBadge(lead.status)}
+                </td>
+                <td className="px-6 py-5">
+                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => notifyMaestro(lead.id, 'contacted')}
+                      className="p-2 text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
+                      title="Marcar como Em Contato"
+                    >
+                      <MessageSquare size={18} />
+                    </button>
+                    <button 
+                      onClick={() => notifyMaestro(lead.id, 'converted')}
+                      className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                      title="Converter em Cliente"
+                    >
+                      <CheckCircle2 size={18} />
+                    </button>
+                    <a 
+                      href={`https://wa.me/${lead.phone.replace(/\D/g, '')}`} 
+                      target="_blank"
+                      className="p-2 text-agro-grass hover:bg-agro-grass/10 rounded-xl transition-all"
+                      title="Chamar no WhatsApp"
+                    >
+                      <Phone size={18} />
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            )) : (
+              <tr>
+                <td colSpan={5} className="px-6 py-20 text-center text-slate-400">
+                  <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users2 size={32} />
+                  </div>
+                  <p className="font-bold">Nenhum lead encontrado.</p>
+                  <p className="text-sm">Inicie uma campanha de tráfego para a Landing Page!</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

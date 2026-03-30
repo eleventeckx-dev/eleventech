@@ -1,39 +1,44 @@
 import React from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Truck, Factory, DollarSign, User, Leaf, LogOut } from 'lucide-react';
+import { Truck, Factory, User, Leaf, LogOut } from 'lucide-react';
 import { useAgro } from '../contexts/AgroContext';
 
 const UserLayout = () => {
+  const { currentUser, companies, logout } = useAgro();
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentUser, setCurrentUser } = useAgro();
+  const company = companies.find(c => c.id === currentUser?.companyId);
 
-  const handleLogout = () => {
-    setCurrentUser(null);
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 
   const menu = [
     { name: 'Coleta', path: '/user/coleta', icon: Truck },
     { name: 'Benefic.', path: '/user/beneficiamento', icon: Factory },
-    { name: 'Financ.', path: '/user/financeiro', icon: DollarSign },
     { name: 'Perfil', path: '/user/perfil', icon: User },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-emerald-200">
+    <div 
+      className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans"
+      style={{ isolation: 'isolate' } as any}
+    >
       
       {/* Mobile App Header - Premium Glassmorphism */}
       <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-white/50 shadow-[0_2px_20px_-10px_rgba(0,0,0,0.05)] transition-all">
         <div className="max-w-md mx-auto w-full flex items-center justify-between px-6 h-20">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-tr from-emerald-600 to-emerald-400 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
-              <Leaf size={20} className="text-white fill-white/20" />
-            </div>
-            <div>
-              <span className="text-xl font-black text-slate-800 tracking-tight leading-none block">AgroFlow</span>
-              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Operação</span>
-            </div>
+            <Link to="/user/perfil" className="flex items-center gap-3 group">
+              <div className="flex items-center gap-2 font-black text-slate-800 text-lg">
+                {company?.logo ? (
+                  <img src={company.logo} alt="Eleven Tech" className="h-8 object-contain" />
+                ) : (
+                  "Eleven Tech"
+                )}
+              </div>
+            </Link>
           </div>
           
           <div className="flex items-center gap-2">
@@ -45,17 +50,24 @@ const UserLayout = () => {
               <LogOut size={20} strokeWidth={2.5} />
             </button>
             <div className="relative group cursor-pointer">
-              <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 border-2 border-white shadow-sm transition-transform active:scale-95">
-                {currentUser?.name.charAt(0) || '?'}
+              <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 border-2 border-white shadow-sm transition-transform active:scale-95 overflow-hidden">
+                {currentUser?.avatar ? (
+                  <img src={currentUser.avatar} alt="Perfil" className="w-full h-full object-cover" />
+                ) : (
+                  currentUser?.name.charAt(0) || '?'
+                )}
               </div>
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
+              <div 
+                className="absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full shadow-sm"
+                style={{ backgroundColor: 'var(--primary-color)' }}
+              ></div>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-md mx-auto bg-slate-50 relative flex flex-col">
+      <main className="flex-1 w-full max-w-md mx-auto relative flex flex-col">
         <div className="flex-1 overflow-y-auto pb-32 pt-4 px-2">
           <Outlet />
         </div>
@@ -72,10 +84,16 @@ const UserLayout = () => {
                    to={item.path} 
                    className="flex flex-col items-center justify-center w-16 h-full gap-1.5 transition-all group relative"
                  >
-                   <div className={`relative p-2.5 rounded-2xl transition-all duration-300 ${isActive ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20 scale-110 -translate-y-1' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}>
+                   <div 
+                     className={`relative p-2.5 rounded-2xl transition-all duration-300 ${isActive ? 'text-white shadow-md scale-110 -translate-y-1' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                     style={isActive ? { background: 'var(--gradient-bg)', boxShadow: '0 8px 20px -6px var(--primary-color)' } : {}}
+                   >
                      <Icon size={22} className={isActive ? 'fill-white/20' : ''} strokeWidth={isActive ? 2.5 : 2} />
                    </div>
-                   <span className={`text-[10px] font-bold truncate w-full text-center transition-colors duration-300 ${isActive ? 'text-emerald-700 opacity-100' : 'text-slate-400 opacity-80'}`}>
+                   <span 
+                     className={`text-[10px] font-bold truncate w-full text-center transition-colors duration-300 ${isActive ? 'opacity-100' : 'text-slate-400 opacity-80'}`}
+                     style={isActive ? { color: 'var(--primary-color)' } : {}}
+                   >
                      {item.name}
                    </span>
                  </Link>

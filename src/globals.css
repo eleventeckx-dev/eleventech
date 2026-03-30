@@ -90,12 +90,36 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
+@layer utilities {
+  .text-brand {
+    color: var(--primary-color);
   }
-
-  body {
-    @apply bg-background text-foreground;
+  .bg-brand {
+    background-color: var(--primary-color);
+  }
+  .bg-brand-soft {
+    background-color: color-mix(in srgb, var(--primary-color), white 92%);
+  }
+  .border-brand {
+    border-color: var(--primary-color);
+  }
+  .border-brand-soft {
+    border-color: color-mix(in srgb, var(--primary-color), white 80%);
+  }
+  .ring-brand {
+    --tw-ring-color: color-mix(in srgb, var(--primary-color), transparent 85%);
+  }
+  .btn-brand {
+    background: var(--gradient-bg);
+    color: white;
+    box-shadow: 0 10px 30px -10px color-mix(in srgb, var(--primary-color), transparent 50%);
+  }
+  .btn-brand:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 40px -10px color-mix(in srgb, var(--primary-color), transparent 40%);
+  }
+  .btn-brand:active {
+    transform: translateY(0);
+    scale: 0.98;
   }
 }

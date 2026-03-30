@@ -1,0 +1,54 @@
+﻿[
+    {
+        "id":  "e63145a8-052d-40ce-ac18-91225c736c7a",
+        "company_id":  null,
+        "name":  "ElevenTech Master",
+        "email":  "sadmin@eleventech.com",
+        "role":  "super_admin",
+        "status":  "active",
+        "permissions":  {
+                            "canCollect":  true,
+                            "canProcess":  true,
+                            "canMarkPayment":  true,
+                            "canViewReports":  true,
+                            "canManageFinancial":  true
+                        },
+        "avatar_url":  null,
+        "created_at":  "2026-03-28T17:31:59.102595+00:00",
+        "updated_at":  "2026-03-29T13:38:18.754905+00:00",
+        "coins_balance":  0,
+        "xp_total":  0
+    },
+    {
+        "id":  "1bb8809b-f561-4970-a8e3-06448a936ed9",
+        "company_id":  "77a3444d-eda0-47a7-ba11-c98cca324bec",
+        "name":  "Admin Teste",
+        "email":  "test_admin99@empresa.com",
+        "role":  "admin",
+        "status":  "active",
+        "permissions":  {
+
+                        },
+        "avatar_url":  null,
+        "created_at":  "2026-03-29T20:09:58.907098+00:00",
+        "updated_at":  "2026-03-29T20:09:58.907098+00:00",
+        "coins_balance":  0,
+        "xp_total":  0
+    },
+    {
+        "id":  "30223475-277c-453c-b1fb-c11a1f1367f8",
+        "company_id":  "98c44120-9744-4dfd-abf1-7e2a3978b550",
+        "name":  "Admin ENT",
+        "email":  "admin@ent.com",
+        "role":  "admin",
+        "status":  "active",
+        "permissions":  {
+
+                        },
+        "avatar_url":  null,
+        "created_at":  "2026-03-29T20:13:30.538701+00:00",
+        "updated_at":  "2026-03-29T20:13:30.538701+00:00",
+        "coins_balance":  0,
+        "xp_total":  0
+    }
+]

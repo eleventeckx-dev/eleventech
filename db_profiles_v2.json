@@ -1,0 +1,16 @@
+﻿[
+    {
+        "id":  "e63145a8-052d-40ce-ac18-91225c736c7a",
+        "email":  "sadmin@eleventech.com",
+        "role":  "super_admin",
+        "company_id":  null,
+        "name":  "ElevenTech Master"
+    },
+    {
+        "id":  "1bb8809b-f561-4970-a8e3-06448a936ed9",
+        "email":  "test_admin99@empresa.com",
+        "role":  "admin",
+        "company_id":  "77a3444d-eda0-47a7-ba11-c98cca324bec",
+        "name":  "Admin Teste"
+    }
+]

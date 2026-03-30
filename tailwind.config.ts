@@ -62,6 +62,16 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        agro: {
+          deep: "#051D0D",        // Verde floresta profundo (Novo Padrão LP)
+          forest: "#113A22",      // Verde Trator / Folha escura
+          grass: "#1E5E3D",       // Verde grama
+          earth: "#7A3E26",       // Terracota escuro / Couro
+          clay: "#C27A5B",        // Cerâmica clara
+          wheat: "#E5A93A",       // Trigo / Ouro
+          sand: "#F9F6F0",        // Palha / Fundo off-white quentinho
+          stone: "#EBE6DE",       // Pedra / Bordas suaves
+        }
       },
       borderRadius: {
         lg: "var(--radius)",

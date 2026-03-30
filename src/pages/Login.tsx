@@ -1,71 +1,98 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAgro } from '../contexts/AgroContext';
-import { ShieldCheck, LogIn, Mail, Lock, Crown, Building2, User, Tractor } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { ShieldCheck, LogIn, Mail, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Login = () => {
-  const { users, producers, setCurrentUser } = useAgro();
+  const { currentUser, companies, setBrandingSlug } = useAgro();
   const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const performLogin = (targetEmail: string, targetPass: string) => {
-    // 1. Tenta achar na lista de Usuários da Plataforma / Empresa
-    const user = users.find(u => u.email.toLowerCase() === targetEmail.toLowerCase());
-    
-    // 2. Tenta achar na lista de Produtores
-    const producer = producers.find(p => p.email?.toLowerCase() === targetEmail.toLowerCase());
-    
-    if (user && targetPass === '123456') {
-      setCurrentUser(user);
-      toast.success(`Bem-vindo, ${user.name}!`);
-      
-      if (user.role === 'super_admin') navigate('/super-admin/dashboard');
-      else if (user.role === 'admin') navigate('/app/dashboard');
-      else if (user.role === 'collaborator') navigate('/user'); 
-      
-    } else if (producer && targetPass === (producer.password || '123456')) {
-      // Cria um objeto "User" adaptado para o produtor logado
-      setCurrentUser({
-        id: producer.id,
-        companyId: producer.companyId,
-        name: producer.name,
-        email: producer.email || '',
-        role: 'producer',
-        status: 'active',
-        createdAt: producer.createdAt,
-        updatedAt: producer.updatedAt
+  // Empresa para o branding visual na tela de login
+  const brandingCompany = companies.find(c => c.slug === (slug?.toLowerCase()));
+
+  // Efeito para ativar o branding via URL
+  useEffect(() => {
+    if (slug) {
+      setBrandingSlug(slug);
+    }
+    return () => setBrandingSlug(null);
+  }, [slug, setBrandingSlug]);
+
+  // Redirecionamento automático se já estiver logado
+  useEffect(() => {
+    if (currentUser) {
+      if (currentUser.role === 'maestro') navigate('/super-admin/dashboard');
+      else if (currentUser.role === 'admin') navigate('/app/dashboard');
+      else if (currentUser.role === 'collaborator') {
+        if (currentUser.permissions?.canManageFinancial) {
+          navigate('/app/financeiro');
+        } else {
+          navigate('/user');
+        }
+      }
+      else if (currentUser.role === 'producer') navigate('/producer/dashboard');
+      else {
+        console.warn('Papel de usuário não mapeado para redirecionamento:', currentUser.role);
+        toast.error(`Acesso restrito: O seu nível de acesso (${currentUser.role}) não possui uma área de trabalho definida.`);
+        setLoading(false);
+      }
+    }
+  }, [currentUser, navigate]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      toast.success(`Olá, ${producer.name}! Bem-vindo ao painel do produtor.`);
-      navigate('/producer/dashboard');
+
+      if (error) throw error;
       
-    } else {
-      toast.error('E-mail ou senha incorretos.');
+      // Se não houver erro, o AgroProvider detectará a sessão 
+      // e o useEffect redirecionará o usuário automaticamente.
+      // NÃO desligamos o loading aqui para evitar o "flash" do botão antes de mudar de página.
+    } catch (error: any) {
+      console.error('Erro no login:', error.message);
+      toast.error(error.message === 'Invalid login credentials' 
+        ? 'E-mail ou senha incorretos.' 
+        : 'Ocorreu um erro ao tentar acessar a conta.');
+      setLoading(false);
     }
   };
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    performLogin(email, password);
-  };
-
-  const quickAccess = [
-    { name: 'Gestor', email: 'carlos@agrosul.com', icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 hover:bg-blue-100 border-blue-200' },
-    { name: 'Colaborador', email: 'joao@agrosul.com', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200' },
-    { name: 'Produtor', email: 'jose@produtor.com', icon: Tractor, color: 'text-amber-600', bg: 'bg-amber-50 hover:bg-amber-100 border-amber-200' },
-    { name: 'Super Admin', email: 'sadmin@agro.com', icon: Crown, color: 'text-purple-600', bg: 'bg-purple-50 hover:bg-purple-100 border-purple-200' },
-  ];
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl shadow-slate-200/50 border border-slate-100">
         
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-600 text-white mb-4 shadow-lg shadow-emerald-500/30">
-            <ShieldCheck size={32} />
+          <div 
+            className="inline-flex items-center justify-center w-32 h-32 rounded-full mb-6 mt-2 shadow-xl overflow-hidden bg-white border-4 border-white ring-4 ring-slate-100/50"
+            style={{ 
+              boxShadow: brandingCompany 
+                ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' 
+                : '0 20px 25px -5px var(--primary-color), 0 10px 10px -5px var(--primary-color)' 
+            }}
+          >
+            {brandingCompany?.logo ? (
+              <img src={brandingCompany.logo} alt={brandingCompany.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-brand flex items-center justify-center">
+                <ShieldCheck size={48} className="text-white" />
+              </div>
+            )}
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">AgroFlow</h1>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+            {brandingCompany?.name || 'Eleven Tech'}
+          </h1>
           <p className="text-slate-500 mt-2">Acesse sua conta para continuar</p>
         </div>
 
@@ -82,7 +109,8 @@ const Login = () => {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="seu@email.com" 
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 outline-none focus:ring-2 ring-brand focus:bg-white transition disabled:opacity-50"
+                disabled={loading}
               />
             </div>
           </div>
@@ -98,43 +126,86 @@ const Login = () => {
                 required 
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="Sua senha (padrão: 123456 ou 123)" 
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
+                placeholder="••••••••" 
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 outline-none focus:ring-2 ring-brand focus:bg-white transition disabled:opacity-50"
+                disabled={loading}
               />
             </div>
           </div>
 
           <button 
             type="submit" 
-            className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2 mt-4"
+            disabled={loading}
+            className="w-full text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-70"
+            style={{ 
+              background: 'var(--gradient-bg)',
+              boxShadow: '0 10px 20px -10px var(--primary-color)'
+            }}
           >
-            <LogIn size={20} /> Entrar no Sistema
+            {loading ? (
+              <>
+                <Loader2 size={20} className="animate-spin" />
+                Validando...
+              </>
+            ) : (
+              <>
+                <LogIn size={20} /> Entrar no Sistema
+              </>
+            )}
           </button>
         </form>
 
-        <div className="mt-8">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="h-px bg-slate-200 flex-1"></div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Acesso Rápido (Testes)</span>
-            <div className="h-px bg-slate-200 flex-1"></div>
+        {/* Atalhos Rápidos para Teste */}
+        <div className="mt-8 pt-6 border-t border-slate-100">
+          <p className="text-xs font-semibold text-slate-500 text-center uppercase tracking-wider mb-4">Acessos Rápidos (Teste)</p>
+          <div className="grid grid-cols-1 gap-2">
+            <button 
+              type="button" 
+              onClick={() => { setEmail('sadmin@eleventech.com'); setPassword('123456'); }}
+              className="text-sm bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-600 font-medium py-2 rounded-lg transition-all"
+            >
+              🚀 Mestre: sadmin@eleventech.com
+            </button>
+            <button 
+              type="button" 
+              onClick={() => { setEmail('admin@ent.com'); setPassword('123456'); }}
+              className="text-sm bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 hover:border-indigo-200 text-indigo-700 font-medium py-2 rounded-lg transition-all"
+            >
+              🏢 Empresa: admin@ent.com
+            </button>
+            <button 
+              type="button" 
+              onClick={() => { setEmail('israel@ent.com'); setPassword('123456'); }}
+              className="text-sm bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 hover:border-emerald-200 text-emerald-700 font-medium py-2 rounded-lg transition-all"
+            >
+              👤 Colab (App): israel@ent.com
+            </button>
+            <button 
+              type="button" 
+              onClick={() => { setEmail('financeiro@ent.com'); setPassword('123456'); }}
+              className="text-sm bg-amber-50 border border-amber-100 hover:bg-amber-100 hover:border-amber-200 text-amber-700 font-medium py-2 rounded-lg transition-all"
+            >
+              💰 Colab (Fin): financeiro@ent.com
+            </button>
+            <button 
+              type="button" 
+              onClick={() => { setEmail('produtor@ent.com'); setPassword('123456'); }}
+              className="text-sm bg-orange-50 border border-orange-100 hover:bg-orange-100 hover:border-orange-200 text-orange-700 font-medium py-2 rounded-lg transition-all"
+            >
+              🚜 Produtor: produtor@ent.com
+            </button>
           </div>
-          
-          <div className="grid grid-cols-2 gap-3">
-            {quickAccess.map((item, idx) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={idx}
-                  onClick={() => performLogin(item.email, item.email === 'jose@produtor.com' ? '123' : '123456')}
-                  type="button"
-                  className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all active:scale-95 ${item.bg}`}
-                >
-                  <Icon size={20} className={`mb-1.5 ${item.color}`} />
-                  <span className="text-xs font-bold text-slate-700">{item.name}</span>
-                </button>
-              )
-            })}
+        </div>
+
+        <div className="mt-8 text-center px-4">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <span className="text-xl font-black text-brand tracking-tight leading-none block">
+              {brandingCompany?.name || 'Eleven Tech'}
+            </span>
           </div>
+          <span className="text-xs text-slate-400 font-medium tracking-tight">
+            © 2026 ElevenTech | Gestão Inteligente
+          </span>
         </div>
 
       </div>
@@ -142,4 +213,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Login;

@@ -1,25 +1,51 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Activity, UsersRound, Settings, LogOut, ChevronRight, Tractor, Package } from 'lucide-react';
+import { LayoutDashboard, Activity, DollarSign, Warehouse, UsersRound, Settings, LogOut, ChevronRight, Tractor, Package } from 'lucide-react';
 import { useAgro } from '../contexts/AgroContext';
 
 const AdminLayout = () => {
-  const location = useLocation();
+  const { currentUser, companies, logout } = useAgro();
   const navigate = useNavigate();
-  const { currentUser, setCurrentUser } = useAgro();
+  const location = useLocation();
+  const company = companies.find(c => c.id === currentUser?.companyId);
 
-  // Menu atualizado com a aba Produtos
+  const isFinanceiroUser = currentUser?.role === 'collaborator' && !!currentUser?.permissions?.canManageFinancial;
+
+  useEffect(() => {
+    // 1. Se for colaborador comum sem permissao, ejeta
+    if (currentUser?.role === 'collaborator' && !currentUser?.permissions?.canManageFinancial) {
+      navigate('/user');
+    }
+    
+    // 2. Se for financeiro e tentar acessar tela nao permitida
+    if (isFinanceiroUser) {
+      const allowedPaths = ['/app/financeiro', '/app/operacao', '/app/estoque'];
+      const isAllowed = allowedPaths.some(p => location.pathname.includes(p));
+      if (!isAllowed) {
+        navigate('/app/financeiro');
+      }
+    }
+  }, [currentUser, location.pathname, navigate, isFinanceiroUser]);
+
+  // Menu atualizado com Financeiro e Estoque e Filtrado para o perfil do Financeiro
   const menu = [
     { name: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard },
     { name: 'Operação', path: '/app/operacao', icon: Activity },
+    { name: 'Financeiro', path: '/app/financeiro', icon: DollarSign },
+    { name: 'Estoque', path: '/app/estoque', icon: Warehouse },
     { name: 'Produtores', path: '/app/produtores', icon: Tractor },
     { name: 'Produtos', path: '/app/produtos', icon: Package },
     { name: 'Usuários', path: '/app/usuarios', icon: UsersRound },
     { name: 'Configurações', path: '/app/configuracoes', icon: Settings },
-  ];
+  ].filter(item => {
+    if (isFinanceiroUser) {
+      return ['Financeiro', 'Operação', 'Estoque'].includes(item.name);
+    }
+    return true;
+  });
 
-  const handleLogout = () => {
-    setCurrentUser(null);
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 
@@ -28,12 +54,13 @@ const AdminLayout = () => {
       {/* Sidebar Premium */}
       <aside className="w-[260px] bg-white border-r border-slate-200 flex flex-col shadow-sm z-20 relative">
         <div className="h-20 flex items-center px-6 border-b border-slate-100">
-          <span className="text-xl font-black text-emerald-800 tracking-tight flex items-center gap-2">
-            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center shadow-md shadow-emerald-500/20">
-              <span className="text-white text-sm">🌱</span>
-            </div>
-            AgroFlow
-          </span>
+          <div className="flex items-center gap-2">
+            {company?.logo ? (
+              <img src={company.logo} alt="Eleven Tech" className="h-10 object-contain max-w-[170px]" />
+            ) : (
+              <span className="text-xl font-black tracking-tight" style={{ color: 'var(--primary-color)' }}>Eleven Tech</span>
+            )}
+          </div>
         </div>
         
         <div className="py-6 flex-1 overflow-y-auto custom-scrollbar">
@@ -46,17 +73,22 @@ const AdminLayout = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group ${
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group border ${
                     isActive 
-                      ? 'bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100/50' 
-                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-transparent'
+                      ? 'shadow-sm' 
+                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 border-transparent'
                   }`}
+                  style={isActive ? { 
+                    backgroundColor: 'color-mix(in srgb, var(--primary-color), white 90%)',
+                    color: 'var(--primary-color)',
+                    borderColor: 'color-mix(in srgb, var(--primary-color), white 80%)'
+                  } : {}}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon size={18} className={`${isActive ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-500'} transition-colors`} />
-                    <span className={`text-sm ${isActive ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
+                    <Icon size={18} style={{ color: isActive ? 'var(--primary-color)' : 'inherit' }} className={!isActive ? 'text-slate-400 group-hover:text-slate-600' : ''} />
+                    <span className={`text-sm ${isActive ? 'font-bold' : 'font-medium'}`}>{item.name}</span>
                   </div>
-                  {isActive && <ChevronRight size={14} className="text-emerald-500" />}
+                  {isActive && <ChevronRight size={14} style={{ color: 'var(--primary-color)' }} />}
                 </Link>
               );
             })}
@@ -66,12 +98,21 @@ const AdminLayout = () => {
         <div className="p-4 border-t border-slate-100">
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold shadow-inner">
-                {currentUser?.name.charAt(0)}
+              <div 
+                className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold shadow-inner overflow-hidden"
+                style={{ backgroundColor: 'var(--primary-color)' }}
+              >
+                {currentUser?.avatar ? (
+                  <img src={currentUser.avatar} alt="Perfil" className="w-full h-full object-cover" />
+                ) : (
+                  currentUser?.name.charAt(0)
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-slate-800 truncate">{currentUser?.name}</p>
-                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider truncate">Administrador</p>
+                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider truncate">
+                  {currentUser?.role === 'admin' ? 'Administrador' : 'Colaborador - Operação'}
+                </p>
               </div>
             </div>
             <button 

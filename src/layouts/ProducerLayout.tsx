@@ -4,11 +4,11 @@ import { useAgro } from '../contexts/AgroContext';
 import { LogOut, Tractor } from 'lucide-react';
 
 const ProducerLayout = () => {
-  const { currentUser, setCurrentUser } = useAgro();
+  const { currentUser, logout } = useAgro();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    setCurrentUser(null);
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 

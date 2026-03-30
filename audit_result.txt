@@ -1,0 +1,10 @@
+﻿PROFILES (3):
+  sadmin@eleventech.com | role=super_admin | company=
+  test_admin99@empresa.com | role=admin | company=77a3444d-eda0-47a7-ba11-c98cca324bec
+  admin@ent.com | role=admin | company=98c44120-9744-4dfd-abf1-7e2a3978b550
+
+COMPANIES (2):
+  Trezaely | id=77a3444d-eda0-47a7-ba11-c98cca324bec
+  ENT | id=98c44120-9744-4dfd-abf1-7e2a3978b550
+
+TEST USER RESIDUAL: SIM - PRECISA REMOVER

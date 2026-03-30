@@ -1,0 +1,7 @@
+﻿=== TESTES DE ACESSO DO ADMIN (admin@ent.com) ===
+
+[-] Lendo Companies visiveis ao Admin: 1
+    --> ENT
+
+[-] Lendo Profiles visiveis ao Admin: 1
+    --> admin@ent.com
