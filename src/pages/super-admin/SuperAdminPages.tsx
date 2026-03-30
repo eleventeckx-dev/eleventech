@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAgro } from '../../contexts/AgroContext';
-import { Building2, Plus, CheckCircle2, XCircle, Edit2, Users2, Phone, MessageSquare, Clock, Filter } from 'lucide-react';
+import { Building2, Plus, CheckCircle2, XCircle, Edit2, Users2, Phone, MessageSquare, Clock, Filter, Link as LinkIcon, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 // ---- DASHBOARD SUPER ADMIN ----
@@ -50,6 +50,19 @@ export const SACompanies = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', document: '', adminName: '', adminEmail: '', adminPassword: '' });
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+
+  const getCompanyLink = (slug: string) => {
+    const base = window.location.origin;
+    return `${base}/${slug}/app/dashboard`;
+  };
+
+  const copyLink = (slug: string) => {
+    navigator.clipboard.writeText(getCompanyLink(slug));
+    setCopiedSlug(slug);
+    toast.success('Link copiado!');
+    setTimeout(() => setCopiedSlug(null), 2000);
+  };
 
   const openAddModal = () => {
     setEditingId(null);
@@ -123,6 +136,7 @@ export const SACompanies = () => {
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="px-6 py-4 text-sm font-semibold text-slate-600">Empresa</th>
               <th className="px-6 py-4 text-sm font-semibold text-slate-600">CNPJ</th>
+              <th className="px-6 py-4 text-sm font-semibold text-slate-600">Link de Acesso</th>
               <th className="px-6 py-4 text-sm font-semibold text-slate-600">Status</th>
               <th className="px-6 py-4 text-sm font-semibold text-slate-600 text-right">Ações</th>
             </tr>
@@ -134,7 +148,29 @@ export const SACompanies = () => {
                   <p className="font-semibold text-slate-900">{company.name}</p>
                   <p className="text-xs text-slate-500">ID: {company.id}</p>
                 </td>
-                <td className="px-6 py-4 text-sm text-slate-600">{company.document}</td>
+                <td className="px-6 py-4 text-sm text-slate-600">{company.document || '—'}</td>
+                <td className="px-6 py-4">
+                  {company.slug ? (
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-lg font-mono truncate max-w-[180px]" title={getCompanyLink(company.slug)}>
+                        /{company.slug}/app
+                      </code>
+                      <button
+                        onClick={() => copyLink(company.slug)}
+                        className={`p-1.5 rounded-lg transition-all ${
+                          copiedSlug === company.slug
+                            ? 'bg-emerald-50 text-emerald-600'
+                            : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
+                        }`}
+                        title="Copiar link de acesso"
+                      >
+                        {copiedSlug === company.slug ? <Check size={15} /> : <Copy size={15} />}
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">Sem slug</span>
+                  )}
+                </td>
                 <td className="px-6 py-4">
                   {company.status === 'active' ? (
                     <span className="flex items-center gap-1 text-emerald-600 text-sm font-medium">

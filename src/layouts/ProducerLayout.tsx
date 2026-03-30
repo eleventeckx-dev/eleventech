@@ -10,8 +10,9 @@ const ProducerLayout = () => {
   const company = companies.find(c => c.id === currentUser?.companyId);
 
   const handleLogout = async () => {
+    const slug = companySlug;
     await logout();
-    navigate('/');
+    navigate(`/${slug}`);
   };
 
   return (

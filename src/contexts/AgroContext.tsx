@@ -741,12 +741,15 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addUser = async (user: User, password?: string) => {
     setIsLoading(true);
     try {
+      if (!password) {
+        throw new Error('A senha é obrigatória para criar um novo usuário.');
+      }
       const { data, error } = await supabase.functions.invoke('manage-users', {
         body: {
           action: 'create',
           userData: {
             email: user.email,
-            password: password || '123456',
+            password: password,
             name: user.name,
             role: user.role,
             companyId: user.companyId || currentUser?.companyId,

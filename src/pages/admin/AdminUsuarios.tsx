@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useAgro } from '../../contexts/AgroContext';
 import { User, UserRole } from '../../types';
 import { 
   UserPlus, Edit2, Trash2, CheckCircle2, XCircle, 
-  ShieldCheck, Shield, AlertTriangle 
+  ShieldCheck, Shield, AlertTriangle, Share2, Copy, Check, Link as LinkIcon, Smartphone 
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const AdminUsuarios = () => {
-  const { users, currentUser, addUser, updateUser, deleteUser } = useAgro();
+  const { users, currentUser, companies, addUser, updateUser, deleteUser } = useAgro();
+  const { companySlug } = useParams<{ companySlug: string }>();
   
   // Filtra apenas os usuários da mesma empresa (esconde Maestros)
   const companyUsers = users.filter(u => u.companyId === currentUser?.companyId && u.role !== 'maestro');
+  const company = companies.find(c => c.id === currentUser?.companyId);
 
+  const [copiedLink, setCopiedLink] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   
@@ -137,6 +141,66 @@ const AdminUsuarios = () => {
         </button>
       </div>
 
+      {/* Card de Compartilhamento */}
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 border border-slate-700/50 shadow-xl">
+        <div className="flex items-start gap-4">
+          <div className="w-11 h-11 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+            <Share2 size={22} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-black text-white mb-1">Link de Acesso da Equipe</h3>
+            <p className="text-xs text-slate-400 mb-3">Compartilhe este link com seus colaboradores para que acessem o sistema.</p>
+            
+            <div className="flex items-center gap-2 bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2.5 mb-3">
+              <LinkIcon size={14} className="text-slate-500 shrink-0" />
+              <code className="text-xs text-emerald-400 font-mono truncate flex-1">
+                {window.location.origin}/{companySlug || company?.slug}
+              </code>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/${companySlug || company?.slug}`);
+                  setCopiedLink(true);
+                  toast.success('Link copiado para a área de transferência!');
+                  setTimeout(() => setCopiedLink(false), 2000);
+                }}
+                className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                  copiedLink
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                }`}
+                title="Copiar link"
+              >
+                {copiedLink ? <Check size={15} /> : <Copy size={15} />}
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  `Olá! 👋\n\nVocê foi convidado para acessar o sistema ${company?.name || 'ElevenTech'}.\n\n📲 Acesse pelo link:\n${window.location.origin}/${companySlug || company?.slug}\n\nUse o e-mail e senha que foram cadastrados para você.`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-emerald-600/20"
+              >
+                <Smartphone size={14} /> Enviar via WhatsApp
+              </a>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    `Olá! 👋\n\nVocê foi convidado para acessar o sistema ${company?.name || 'ElevenTech'}.\n\n📲 Acesse pelo link:\n${window.location.origin}/${companySlug || company?.slug}\n\nUse o e-mail e senha que foram cadastrados para você.`
+                  );
+                  toast.success('Mensagem de convite copiada!');
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold rounded-xl transition-all border border-slate-600"
+              >
+                <Copy size={14} /> Copiar Mensagem
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -236,8 +300,8 @@ const AdminUsuarios = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 overflow-y-auto flex items-start justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200 my-auto max-h-[95vh] overflow-y-auto">
             <h3 className="text-xl font-bold text-slate-900 mb-6">
               {editingId ? 'Editar Usuário' : 'Novo Usuário'}
             </h3>

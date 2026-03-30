@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAgro } from '../../contexts/AgroContext';
 import { CheckCircle2, LogOut, Lock, Camera } from 'lucide-react';
 import { uploadImage } from '../../lib/storage';
@@ -9,11 +9,13 @@ import { toast } from 'sonner';
 const UserPerfil = () => {
   const { currentUser, setCurrentUser } = useAgro();
   const navigate = useNavigate();
+  const { companySlug } = useParams<{ companySlug: string }>();
   const [isUploading, setIsUploading] = useState(false);
 
   const handleLogout = () => {
+    const slug = companySlug;
     setCurrentUser(null);
-    navigate('/');
+    navigate(`/${slug}`);
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

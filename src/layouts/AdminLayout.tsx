@@ -46,8 +46,9 @@ const AdminLayout = () => {
   });
 
   const handleLogout = async () => {
+    const slug = companySlug;
     await logout();
-    navigate('/');
+    navigate(`/${slug}`);
   };
 
   return (

@@ -163,47 +163,6 @@ const Login = () => {
           </button>
         </form>
 
-        {/* Atalhos Rápidos para Teste */}
-        <div className="mt-8 pt-6 border-t border-slate-100">
-          <p className="text-xs font-semibold text-slate-500 text-center uppercase tracking-wider mb-4">Acessos Rápidos (Teste)</p>
-          <div className="grid grid-cols-1 gap-2">
-            <button 
-              type="button" 
-              onClick={() => { setEmail('sadmin@eleventech.com'); setPassword('123456'); }}
-              className="text-sm bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-600 font-medium py-2 rounded-lg transition-all"
-            >
-              🚀 Mestre: sadmin@eleventech.com
-            </button>
-            <button 
-              type="button" 
-              onClick={() => { setEmail('admin@ent.com'); setPassword('123456'); }}
-              className="text-sm bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 hover:border-indigo-200 text-indigo-700 font-medium py-2 rounded-lg transition-all"
-            >
-              🏢 Empresa: admin@ent.com
-            </button>
-            <button 
-              type="button" 
-              onClick={() => { setEmail('israel@ent.com'); setPassword('123456'); }}
-              className="text-sm bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 hover:border-emerald-200 text-emerald-700 font-medium py-2 rounded-lg transition-all"
-            >
-              👤 Colab (App): israel@ent.com
-            </button>
-            <button 
-              type="button" 
-              onClick={() => { setEmail('financeiro@ent.com'); setPassword('123456'); }}
-              className="text-sm bg-amber-50 border border-amber-100 hover:bg-amber-100 hover:border-amber-200 text-amber-700 font-medium py-2 rounded-lg transition-all"
-            >
-              💰 Colab (Fin): financeiro@ent.com
-            </button>
-            <button 
-              type="button" 
-              onClick={() => { setEmail('produtor@ent.com'); setPassword('123456'); }}
-              className="text-sm bg-orange-50 border border-orange-100 hover:bg-orange-100 hover:border-orange-200 text-orange-700 font-medium py-2 rounded-lg transition-all"
-            >
-              🚜 Produtor: produtor@ent.com
-            </button>
-          </div>
-        </div>
 
         <div className="mt-8 text-center px-4">
           <div className="flex items-center justify-center gap-2 mb-2">

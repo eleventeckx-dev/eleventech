@@ -14,7 +14,7 @@ export default defineConfig(() => ({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "icon-512x512.png", "logo-512x512.png"],
+      includeAssets: ["favicon.ico", "icon-192x192.png", "icon-512x512.png", "logo-512x512.png"],
       manifest: {
         name: "ElevenTech — Gestão Agro Inteligente",
         short_name: "ElevenTech",
@@ -27,6 +27,18 @@ export default defineConfig(() => ({
         start_url: "/",
         categories: ["business", "productivity"],
         icons: [
+          {
+            src: "/icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any"
+          },
+          {
+            src: "/icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "maskable"
+          },
           {
             src: "/icon-512x512.png",
             sizes: "512x512",
