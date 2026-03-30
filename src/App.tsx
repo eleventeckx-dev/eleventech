@@ -45,12 +45,11 @@ const App = () => (
       <AgroProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<LpVendas />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/login/:slug" element={<Login />} />
+            <Route path="/" element={<Login />} />
+            <Route path="/lpvendas" element={<LpVendas />} />
+            <Route path="/link/lpvendas" element={<Navigate to="/lpvendas" replace />} />
+            <Route path="/login" element={<Navigate to="/" replace />} />
             <Route path="/:slug" element={<Login />} />
-            <Route path="/lpvendas" element={<Navigate to="/" replace />} />
-            <Route path="/link/lpvendas" element={<Navigate to="/" replace />} />
 
             {/* MAESTRO (SUPER ADMIN) ROUTES */}
             <Route element={<ProtectedRoute allowedRoles={['maestro']} />}>
