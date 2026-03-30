@@ -27,23 +27,31 @@ const Login = () => {
   // Redirecionamento automático se já estiver logado
   useEffect(() => {
     if (currentUser) {
-      if (currentUser.role === 'maestro') navigate('/super-admin/dashboard');
-      else if (currentUser.role === 'admin') navigate('/app/dashboard');
+      if (currentUser.role === 'maestro') {
+        navigate('/super-admin/dashboard');
+        return;
+      }
+
+      // Procura a empresa do usuário logado para montar a URL
+      const userCompany = companies.find(c => c.id === currentUser.companyId);
+      const companySlug = userCompany?.slug || 'eleventech';
+
+      if (currentUser.role === 'admin') navigate(`/${companySlug}/app/dashboard`);
       else if (currentUser.role === 'collaborator') {
         if (currentUser.permissions?.canManageFinancial) {
-          navigate('/app/financeiro');
+          navigate(`/${companySlug}/app/financeiro`);
         } else {
-          navigate('/user');
+          navigate(`/${companySlug}/user`);
         }
       }
-      else if (currentUser.role === 'producer') navigate('/producer/dashboard');
+      else if (currentUser.role === 'producer') navigate(`/${companySlug}/producer/dashboard`);
       else {
         console.warn('Papel de usuário não mapeado para redirecionamento:', currentUser.role);
         toast.error(`Acesso restrito: O seu nível de acesso (${currentUser.role}) não possui uma área de trabalho definida.`);
         setLoading(false);
       }
     }
-  }, [currentUser, navigate]);
+  }, [currentUser, companies, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

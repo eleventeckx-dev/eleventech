@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { LayoutDashboard, Activity, DollarSign, Warehouse, UsersRound, Settings, LogOut, ChevronRight, Tractor, Package } from 'lucide-react';
 import { useAgro } from '../contexts/AgroContext';
 
@@ -7,6 +7,7 @@ const AdminLayout = () => {
   const { currentUser, companies, logout } = useAgro();
   const navigate = useNavigate();
   const location = useLocation();
+  const { companySlug } = useParams<{ companySlug: string }>();
   const company = companies.find(c => c.id === currentUser?.companyId);
 
   const isFinanceiroUser = currentUser?.role === 'collaborator' && !!currentUser?.permissions?.canManageFinancial;
@@ -14,29 +15,29 @@ const AdminLayout = () => {
   useEffect(() => {
     // 1. Se for colaborador comum sem permissao, ejeta
     if (currentUser?.role === 'collaborator' && !currentUser?.permissions?.canManageFinancial) {
-      navigate('/user');
+      navigate(`/${companySlug}/user`);
     }
     
     // 2. Se for financeiro e tentar acessar tela nao permitida
     if (isFinanceiroUser) {
-      const allowedPaths = ['/app/financeiro', '/app/operacao', '/app/estoque'];
+      const allowedPaths = ['financeiro', 'operacao', 'estoque'];
       const isAllowed = allowedPaths.some(p => location.pathname.includes(p));
       if (!isAllowed) {
-        navigate('/app/financeiro');
+        navigate(`/${companySlug}/app/financeiro`);
       }
     }
-  }, [currentUser, location.pathname, navigate, isFinanceiroUser]);
+  }, [currentUser, location.pathname, navigate, isFinanceiroUser, companySlug]);
 
   // Menu atualizado com Financeiro e Estoque e Filtrado para o perfil do Financeiro
   const menu = [
-    { name: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard },
-    { name: 'Operação', path: '/app/operacao', icon: Activity },
-    { name: 'Financeiro', path: '/app/financeiro', icon: DollarSign },
-    { name: 'Estoque', path: '/app/estoque', icon: Warehouse },
-    { name: 'Produtores', path: '/app/produtores', icon: Tractor },
-    { name: 'Produtos', path: '/app/produtos', icon: Package },
-    { name: 'Usuários', path: '/app/usuarios', icon: UsersRound },
-    { name: 'Configurações', path: '/app/configuracoes', icon: Settings },
+    { name: 'Dashboard', path: `/${companySlug}/app/dashboard`, icon: LayoutDashboard },
+    { name: 'Operação', path: `/${companySlug}/app/operacao`, icon: Activity },
+    { name: 'Financeiro', path: `/${companySlug}/app/financeiro`, icon: DollarSign },
+    { name: 'Estoque', path: `/${companySlug}/app/estoque`, icon: Warehouse },
+    { name: 'Produtores', path: `/${companySlug}/app/produtores`, icon: Tractor },
+    { name: 'Produtos', path: `/${companySlug}/app/produtos`, icon: Package },
+    { name: 'Usuários', path: `/${companySlug}/app/usuarios`, icon: UsersRound },
+    { name: 'Configurações', path: `/${companySlug}/app/configuracoes`, icon: Settings },
   ].filter(item => {
     if (isFinanceiroUser) {
       return ['Financeiro', 'Operação', 'Estoque'].includes(item.name);

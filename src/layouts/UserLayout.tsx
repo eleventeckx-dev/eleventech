@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Truck, Factory, User, Leaf, LogOut } from 'lucide-react';
 import { useAgro } from '../contexts/AgroContext';
 
@@ -7,6 +7,7 @@ const UserLayout = () => {
   const { currentUser, companies, logout } = useAgro();
   const location = useLocation();
   const navigate = useNavigate();
+  const { companySlug } = useParams<{ companySlug: string }>();
   const company = companies.find(c => c.id === currentUser?.companyId);
 
   const handleLogout = async () => {
@@ -15,9 +16,9 @@ const UserLayout = () => {
   };
 
   const menu = [
-    { name: 'Coleta', path: '/user/coleta', icon: Truck },
-    { name: 'Benefic.', path: '/user/beneficiamento', icon: Factory },
-    { name: 'Perfil', path: '/user/perfil', icon: User },
+    { name: 'Coleta', path: `/${companySlug}/user/coleta`, icon: Truck },
+    { name: 'Benefic.', path: `/${companySlug}/user/beneficiamento`, icon: Factory },
+    { name: 'Perfil', path: `/${companySlug}/user/perfil`, icon: User },
   ];
 
   return (
@@ -30,7 +31,7 @@ const UserLayout = () => {
       <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-white/50 shadow-[0_2px_20px_-10px_rgba(0,0,0,0.05)] transition-all">
         <div className="max-w-md mx-auto w-full flex items-center justify-between px-6 h-20">
           <div className="flex items-center gap-3">
-            <Link to="/user/perfil" className="flex items-center gap-3 group">
+            <Link to={`/${companySlug}/user/perfil`} className="flex items-center gap-3 group">
               <div className="flex items-center gap-2 font-black text-slate-800 text-lg">
                 {company?.logo ? (
                   <img src={company.logo} alt="Eleven Tech" className="h-8 object-contain" />

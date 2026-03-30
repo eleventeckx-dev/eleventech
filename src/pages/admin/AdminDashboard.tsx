@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useAgro } from '../../contexts/AgroContext';
 import { 
   Truck, DollarSign, AlertTriangle, Package, Users, 
@@ -10,6 +10,7 @@ import {
 
 const AdminDashboard = () => {
   const { loads, producers, products, currentUser } = useAgro();
+  const { companySlug } = useParams<{ companySlug: string }>();
 
   // Filtrar dados pela empresa do admin logado
   const companyLoads = useMemo(() => loads.filter(l => l.companyId === currentUser?.companyId), [loads, currentUser]);
@@ -93,9 +94,9 @@ const AdminDashboard = () => {
 
   // Atalhos rápidos
   const shortcuts = [
-    { name: 'Central de Operações', path: '/app/operacao', icon: Activity, color: 'text-brand', bg: 'bg-brand-soft', hover: 'hover:border-brand-soft hover:shadow-brand-soft' },
-    { name: 'Gerenciar Usuários', path: '/app/usuarios', icon: UsersRound, color: 'text-indigo-600', bg: 'bg-indigo-50', hover: 'hover:border-indigo-200 hover:shadow-indigo-500/10' },
-    { name: 'Ajustes do Sistema', path: '/app/configuracoes', icon: Settings, color: 'text-slate-600', bg: 'bg-slate-100', hover: 'hover:border-slate-300 hover:shadow-slate-500/10' },
+    { name: 'Central de Operações', path: `/${companySlug}/app/operacao`, icon: Activity, color: 'text-brand', bg: 'bg-brand-soft', hover: 'hover:border-brand-soft hover:shadow-brand-soft' },
+    { name: 'Gerenciar Usuários', path: `/${companySlug}/app/usuarios`, icon: UsersRound, color: 'text-indigo-600', bg: 'bg-indigo-50', hover: 'hover:border-indigo-200 hover:shadow-indigo-500/10' },
+    { name: 'Ajustes do Sistema', path: `/${companySlug}/app/configuracoes`, icon: Settings, color: 'text-slate-600', bg: 'bg-slate-100', hover: 'hover:border-slate-300 hover:shadow-slate-500/10' },
   ];
 
   return (
@@ -220,7 +221,7 @@ const AdminDashboard = () => {
               );
             })}
           </div>
-          <Link to="/app/operacao" className="mt-4 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 transition">
+          <Link to={`/${companySlug}/app/operacao`} className="mt-4 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 transition">
             Ver todas as cargas <ArrowUpRight size={14} />
           </Link>
         </div>
@@ -332,7 +333,7 @@ const AdminDashboard = () => {
               </table>
             </div>
           )}
-          <Link to="/app/produtores" className="mt-4 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 transition">
+          <Link to={`/${companySlug}/app/produtores`} className="mt-4 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-800 transition">
             Gerenciar Produtores <ArrowUpRight size={14} />
           </Link>
         </div>

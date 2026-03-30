@@ -1,11 +1,13 @@
 import React from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useParams } from 'react-router-dom';
 import { useAgro } from '../contexts/AgroContext';
 import { LogOut, Tractor } from 'lucide-react';
 
 const ProducerLayout = () => {
-  const { currentUser, logout } = useAgro();
+  const { currentUser, companies, logout } = useAgro();
   const navigate = useNavigate();
+  const { companySlug } = useParams<{ companySlug: string }>();
+  const company = companies.find(c => c.id === currentUser?.companyId);
 
   const handleLogout = async () => {
     await logout();
@@ -19,12 +21,16 @@ const ProducerLayout = () => {
           <div className="flex items-center justify-between h-16">
             
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center">
-                <Tractor size={24} />
-              </div>
+              {company?.logo ? (
+                <img src={company.logo} alt="Eleven Tech" className="h-10 object-contain max-w-[170px]" />
+              ) : (
+                <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center">
+                  <Tractor size={24} />
+                </div>
+              )}
               <div>
                 <h1 className="text-xl font-black text-slate-800 tracking-tight leading-none">Painel do Produtor</h1>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Acompanhamento de Cargas</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{company?.name || 'Acompanhamento de Cargas'}</p>
               </div>
             </div>
 

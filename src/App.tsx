@@ -64,7 +64,7 @@ const App = () => (
 
             {/* ADMIN ROUTES */}
             <Route element={<ProtectedRoute allowedRoles={['admin', 'collaborator']} />}>
-              <Route path="/app" element={<AdminLayout />}>
+              <Route path="/:companySlug/app" element={<AdminLayout />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="operacao" element={<AdminOperacao />} />
@@ -79,7 +79,7 @@ const App = () => (
 
             {/* USER (COLLABORATOR) ROUTES - Mobile App */}
             <Route element={<ProtectedRoute allowedRoles={['collaborator']} />}>
-              <Route path="/user" element={<UserLayout />}>
+              <Route path="/:companySlug/user" element={<UserLayout />}>
                 <Route index element={<UserIndexRedirect />} />
                 <Route path="coleta" element={<UserColeta />} />
                 <Route path="beneficiamento" element={<UserBeneficiamento />} />
@@ -89,7 +89,7 @@ const App = () => (
 
             {/* PRODUCER ROUTES - Portal Simples */}
             <Route element={<ProtectedRoute allowedRoles={['producer']} />}>
-              <Route path="/producer" element={<ProducerLayout />}>
+              <Route path="/:companySlug/producer" element={<ProducerLayout />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<ProducerDashboard />} />
               </Route>

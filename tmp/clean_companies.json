@@ -1,0 +1,41 @@
+[
+  {
+    "id": "98c44120-9744-4dfd-abf1-7e2a3978b550",
+    "name": "ENT",
+    "document": "00000000000001",
+    "status": "active",
+    "logo": "https://asasrhkajusmxlbtpcdn.supabase.co/storage/v1/object/public/uploads/collections/d3yit9s5zym_1774831711865.png",
+    "primary_color": "#fa1900",
+    "created_at": "2026-03-29T01:27:18.884+00:00",
+    "updated_at": "2026-03-30T01:44:31.391+00:00",
+    "secondary_color": "#000000",
+    "is_gradient": true,
+    "slug": "ent"
+  },
+  {
+    "id": "77a3444d-eda0-47a7-ba11-c98cca324bec",
+    "name": "Trezaely",
+    "document": "08.315.658/0001-50",
+    "status": "active",
+    "logo": "https://ik.imagekit.io/lflb43qwh/ElevenTech/Eleven%20Tech%20Logo.jpeg",
+    "primary_color": "#064e3b",
+    "created_at": "2026-03-29T01:11:13.808+00:00",
+    "updated_at": "2026-03-30T01:30:43.142+00:00",
+    "secondary_color": "#007013",
+    "is_gradient": true,
+    "slug": "trezaely"
+  },
+  {
+    "id": "1b55592a-8ac6-4b2d-b775-df1bb93966c7",
+    "name": "Eleven Tech",
+    "document": null,
+    "status": "inactive",
+    "logo": "https://ik.imagekit.io/lflb43qwh/ElevenTech/Eleven%20Tech%20Logo.jpeg",
+    "primary_color": "#051D0D",
+    "created_at": "2026-03-30T01:29:07.527556+00:00",
+    "updated_at": "2026-03-30T18:31:52.7+00:00",
+    "secondary_color": "#113A22",
+    "is_gradient": true,
+    "slug": "eleventech"
+  }
+]
