@@ -19,6 +19,7 @@ export default defineConfig(() => ({
         name: "ElevenTech — Gestão Agro Inteligente",
         short_name: "ElevenTech",
         description: "Plataforma de gestão de operações agrícolas, do campo ao financeiro. Controle cargas, produtores e beneficiamento.",
+        lang: "pt-BR",
         theme_color: "#051D0D",
         background_color: "#051D0D",
         display: "standalone",
@@ -31,25 +32,13 @@ export default defineConfig(() => ({
             src: "/icon-192x192.png",
             sizes: "192x192",
             type: "image/png",
-            purpose: "any"
-          },
-          {
-            src: "/icon-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "maskable"
+            purpose: "any maskable"
           },
           {
             src: "/icon-512x512.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "any"
-          },
-          {
-            src: "/icon-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable"
+            purpose: "any maskable"
           },
           {
             src: "/logo-512x512.png",
@@ -65,6 +54,13 @@ export default defineConfig(() => ({
             type: "image/png",
             form_factor: "wide",
             label: "ElevenTech Dashboard"
+          },
+          {
+            src: "/logo-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            form_factor: "narrow",
+            label: "ElevenTech Mobile"
           }
         ]
       },
