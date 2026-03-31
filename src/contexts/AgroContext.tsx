@@ -91,8 +91,8 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
           avatar: profile.avatar,
           status: profile.status,
           permissions: profile.permissions || [],
-          coinsBalance: profile.coins_balance || 0,
-          xpTotal: profile.xp_total || 0,
+          coinsBalance: 0,
+          xpTotal: 0,
           createdAt: profile.created_at,
           updatedAt: profile.updated_at
         };
@@ -388,8 +388,8 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: u.role,
         status: u.status,
         permissions: u.permissions,
-        coinsBalance: u.coins_balance || 0,
-        xpTotal: u.xp_total || 0,
+        coinsBalance: 0,
+        xpTotal: 0,
         createdAt: u.created_at,
         updatedAt: u.updated_at
       }));
