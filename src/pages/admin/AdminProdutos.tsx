@@ -69,20 +69,21 @@ const AdminProdutos = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Catálogo de Produtos</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800">Catálogo de Produtos</h2>
           <p className="text-sm text-slate-500 mt-1">Gerencie as variedades de produtos com fotos.</p>
         </div>
         <button 
           onClick={openAddModal}
-          className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/20"
+          className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/20 w-full md:w-auto"
         >
           <Plus size={20} /> Novo Produto
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
@@ -96,7 +97,6 @@ const AdminProdutos = () => {
             {companyProducts.map(product => (
               <tr key={product.id} className="hover:bg-slate-50/50 transition">
                 <td className="px-6 py-4">
-                  {/* Tamanho da imagem controlado e pequeno conforme solicitado */}
                   <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
                     {product.imageUrl ? (
                       <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
@@ -142,6 +142,49 @@ const AdminProdutos = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="block md:hidden space-y-3">
+        {companyProducts.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">
+            Nenhum produto cadastrado.
+          </div>
+        ) : (
+          companyProducts.map(product => (
+            <div key={product.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                  {product.imageUrl ? (
+                    <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <Package size={20} className="text-slate-400" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-slate-900 leading-tight truncate">{product.name}</p>
+                  <span className="inline-flex bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold border border-slate-200 mt-1">
+                    {product.category}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button 
+                    onClick={() => openEditModal(product)}
+                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(product.id)}
+                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Modal de Cadastro / Edição */}

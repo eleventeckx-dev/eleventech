@@ -72,19 +72,20 @@ const AdminOperacao = () => {
       
       {/* Cabeçalho */}
       <div>
-        <h2 className="text-[28px] font-black text-slate-900 flex items-center gap-3 tracking-tight">
-          <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100">
-            <PackageSearch size={24} className="text-brand" />
+        <h2 className="text-xl md:text-[28px] font-black text-slate-900 flex items-center gap-3 tracking-tight">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100">
+            <PackageSearch size={20} className="text-brand md:hidden" />
+            <PackageSearch size={24} className="text-brand hidden md:block" />
           </div>
           Central de Operações
         </h2>
-        <p className="text-slate-500 font-medium mt-2">
+        <p className="text-slate-500 font-medium mt-2 text-sm md:text-base">
           Monitoramento em tempo real do fluxo de cargas, do campo ao financeiro.
         </p>
       </div>
 
       {/* Barra de Filtros */}
-      <div className="bg-white/80 backdrop-blur-md p-5 rounded-[2rem] shadow-sm border border-slate-200 flex flex-wrap gap-4 items-end">
+      <div className="bg-white/80 backdrop-blur-md p-3 md:p-5 rounded-2xl md:rounded-[2rem] shadow-sm border border-slate-200 flex flex-wrap gap-3 md:gap-4 items-end">
         <div className="flex-1 min-w-[180px] space-y-1.5">
           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-2">Buscar ID</label>
           <div className="relative">
@@ -120,20 +121,21 @@ const AdminOperacao = () => {
       </div>
 
       {/* Sub-abas de Etapas */}
-      <div className="bg-slate-200/50 p-2 rounded-[2rem] flex overflow-x-auto custom-scrollbar gap-2 items-center">
+      <div className="bg-slate-200/50 p-1.5 md:p-2 rounded-2xl md:rounded-[2rem] flex overflow-x-auto custom-scrollbar gap-1.5 md:gap-2 items-center">
         {stages.map((stage) => {
           const Icon = stage.icon;
           const isActive = activeTab === stage.id;
           return (
-            <button key={stage.id} onClick={() => setActiveTab(stage.id)} className={`flex-1 min-w-[240px] flex items-center gap-4 px-5 py-4 rounded-[1.5rem] transition-all duration-300 relative overflow-hidden group ${isActive ? 'bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-slate-200/50' : 'hover:bg-slate-100/80 border border-transparent'}`}>
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors duration-300 ${isActive ? stage.bg + ' text-white shadow-sm' : 'bg-slate-100 text-slate-400 group-hover:text-slate-600 group-hover:bg-slate-200'}`}>
-                <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+            <button key={stage.id} onClick={() => setActiveTab(stage.id)} className={`flex-1 min-w-[120px] md:min-w-[240px] flex items-center gap-2 md:gap-4 px-3 md:px-5 py-3 md:py-4 rounded-xl md:rounded-[1.5rem] transition-all duration-300 relative overflow-hidden group ${isActive ? 'bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-slate-200/50' : 'hover:bg-slate-100/80 border border-transparent'}`}>
+              <div className={`w-8 h-8 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 transition-colors duration-300 ${isActive ? stage.bg + ' text-white shadow-sm' : 'bg-slate-100 text-slate-400 group-hover:text-slate-600 group-hover:bg-slate-200'}`}>
+                <Icon size={18} className="md:hidden" strokeWidth={isActive ? 2.5 : 2} />
+                <Icon size={24} className="hidden md:block" strokeWidth={isActive ? 2.5 : 2} />
               </div>
-              <div className="flex-1 text-left">
-                <h3 className={`font-black text-base leading-tight transition-colors ${isActive ? 'text-slate-800' : 'text-slate-500'}`}>{stage.title}</h3>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 transition-colors ${isActive ? stage.color : 'text-slate-400'}`}>{stage.subtitle}</p>
+              <div className="flex-1 text-left min-w-0">
+                <h3 className={`font-black text-xs md:text-base leading-tight transition-colors truncate ${isActive ? 'text-slate-800' : 'text-slate-500'}`}>{stage.title}</h3>
+                <p className={`text-[8px] md:text-[10px] font-bold uppercase tracking-widest mt-0.5 transition-colors truncate ${isActive ? stage.color : 'text-slate-400'}`}>{stage.subtitle}</p>
               </div>
-              <span className={`text-lg font-black shrink-0 px-3 py-1 rounded-xl transition-all ${isActive ? stage.lightBg + ' ' + stage.color : 'text-slate-400 bg-slate-100'}`}>{stage.count}</span>
+              <span className={`text-sm md:text-lg font-black shrink-0 px-2 md:px-3 py-0.5 md:py-1 rounded-lg md:rounded-xl transition-all ${isActive ? stage.lightBg + ' ' + stage.color : 'text-slate-400 bg-slate-100'}`}>{stage.count}</span>
               {isActive && (<div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-1 rounded-t-full ${stage.bg}`}></div>)}
             </button>
           );

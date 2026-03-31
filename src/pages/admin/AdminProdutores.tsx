@@ -73,20 +73,21 @@ const AdminProdutores = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Gestão de Produtores</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800">Gestão de Produtores</h2>
           <p className="text-sm text-slate-500 mt-1">Cadastre os produtores para que eles possam acompanhar suas cargas.</p>
         </div>
         <button 
           onClick={openAddModal}
-          className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/20"
+          className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/20 w-full md:w-auto"
         >
           <Plus size={20} /> Novo Produtor
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
@@ -155,6 +156,60 @@ const AdminProdutores = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="block md:hidden space-y-3">
+        {companyProducers.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">
+            Nenhum produtor encontrado.
+          </div>
+        ) : (
+          companyProducers.map(producer => (
+            <div key={producer.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold border border-emerald-100 shrink-0">
+                  <Tractor size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-slate-900 leading-tight truncate">{producer.name}</p>
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
+                    <MapPin size={12} /> <span className="truncate">{producer.property}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <Phone size={14} className="text-slate-400 shrink-0" />
+                    <span className="truncate">{producer.phone}</span>
+                  </div>
+                  {producer.email ? (
+                    <div className="flex items-center gap-2 text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-md w-fit">
+                      <Mail size={12} /> <span className="truncate max-w-[150px]">{producer.email}</span>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md w-fit">Sem acesso web</div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button 
+                    onClick={() => openEditModal(producer)}
+                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(producer.id)}
+                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Modal de Cadastro / Edição */}

@@ -143,7 +143,7 @@ const AdminFinanceiro = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Lista de Cargas Pendentes de Acerto */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <Receipt size={20} className="text-amber-600" /> Cargas Aguardando Acerto
             </h3>
@@ -152,7 +152,7 @@ const AdminFinanceiro = () => {
               <input 
                 type="text" 
                 placeholder="Buscar produtor..." 
-                className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium text-slate-700 focus:bg-white focus:border-brand focus:ring-4 focus:ring-brand-soft outline-none transition-all w-56"
+                className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium text-slate-700 focus:bg-white focus:border-brand focus:ring-4 focus:ring-brand-soft outline-none transition-all w-full md:w-56"
                 value={searchProducer}
                 onChange={(e) => setSearchProducer(e.target.value)}
               />
@@ -166,7 +166,8 @@ const AdminFinanceiro = () => {
               <p className="text-sm">Todas as cargas beneficiadas já foram precificadas.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-slate-100">
@@ -234,6 +235,44 @@ const AdminFinanceiro = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile Cards */}
+            <div className="block md:hidden space-y-3">
+              {filteredPending.map(load => {
+                const prod = producers.find(p => p.id === load.producerId);
+                return (
+                  <div key={load.id} className="bg-slate-50 rounded-2xl border border-slate-100 p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 font-bold flex items-center justify-center text-sm border border-emerald-100 shrink-0">
+                        {prod?.name.charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-slate-800 truncate">{prod?.name}</p>
+                        <p className="text-xs text-slate-500">{load.collection.type} • #{load.id.slice(-6)}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {(load.processing?.productionWeight || 0) > 0 && (
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">Produção: {load.processing?.productionWeight} kg</span>
+                      )}
+                      {(load.processing?.bulkSaleWeight || 0) > 0 && (
+                        <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100">Granel: {load.processing?.bulkSaleWeight} kg</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-black text-slate-800">{((load.processing?.productionWeight || 0) + (load.processing?.bulkSaleWeight || 0)).toFixed(0)} kg</span>
+                      <button 
+                        onClick={() => setSelectedLoadId(load.id)}
+                        className="btn-brand px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm"
+                      >
+                        Precificar
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            </>
           )}
         </div>
 

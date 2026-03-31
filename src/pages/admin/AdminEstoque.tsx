@@ -108,7 +108,7 @@ const AdminEstoque = () => {
 
       {/* Tabela de Estoque */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
             <Warehouse size={20} className="text-amber-600" /> Lotes em Estoque
           </h3>
@@ -116,7 +116,7 @@ const AdminEstoque = () => {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text" placeholder="Buscar produtor..." 
-              className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium text-slate-700 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 outline-none transition-all w-56"
+              className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium text-slate-700 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 outline-none transition-all w-full md:w-56"
               value={searchProducer} onChange={(e) => setSearchProducer(e.target.value)}
             />
           </div>
@@ -129,7 +129,8 @@ const AdminEstoque = () => {
             <p className="text-sm">Nenhum produto armazenado no momento.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100">
@@ -200,6 +201,48 @@ const AdminEstoque = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile Cards */}
+          <div className="block md:hidden space-y-3">
+            {filteredLoads.map(load => {
+              const prod = producers.find(p => p.id === load.producerId);
+              const product = products.find(p => p.name.toLowerCase() === load.collection.type.toLowerCase());
+              return (
+                <div key={load.id} className="bg-slate-50 rounded-2xl border border-slate-100 p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 font-bold flex items-center justify-center text-sm border border-amber-100 shrink-0">
+                      {prod?.name.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-800 truncate">{prod?.name}</p>
+                      <p className="text-xs text-slate-500">{load.collection.type} • #{load.id.slice(-6)}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="bg-white rounded-xl p-2.5 border border-slate-100 text-center">
+                      <p className="text-[9px] font-bold text-amber-600 uppercase">Estoque</p>
+                      <p className="text-sm font-black text-slate-800">{load.processing?.stockWeight} kg</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-2.5 border border-slate-100 text-center">
+                      <p className="text-[9px] font-bold text-lime-600 uppercase">Verde</p>
+                      <p className="text-sm font-black text-slate-800">{(load.processing?.greenWeight || 0) > 0 ? `${load.processing?.greenWeight} kg` : '—'}</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-2.5 border border-slate-100 text-center">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase">Data</p>
+                      <p className="text-xs font-bold text-slate-600">{new Date(load.updatedAt).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setReleaseModal({ loadId: load.id, available: load.processing?.stockWeight || 0 })}
+                    className="w-full bg-amber-50 text-amber-700 py-2.5 rounded-xl text-xs font-bold hover:bg-amber-100 transition border border-amber-200 flex items-center justify-center gap-1.5"
+                  >
+                    <ArrowRightLeft size={14} /> Liberar do Estoque
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          </>
         )}
       </div>
 

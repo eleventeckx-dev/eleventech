@@ -128,14 +128,14 @@ const AdminUsuarios = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Gestão de Usuários</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800">Gestão de Usuários</h2>
           <p className="text-sm text-slate-500 mt-1">Controle de acessos e permissões da equipe.</p>
         </div>
         <button 
           onClick={openAddModal}
-          className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/20"
+          className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/20 w-full md:w-auto"
         >
           <UserPlus size={20} /> Novo Usuário
         </button>
@@ -201,7 +201,8 @@ const AdminUsuarios = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
@@ -296,6 +297,84 @@ const AdminUsuarios = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="block md:hidden space-y-3">
+        {companyUsers.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">
+            Nenhum usuário encontrado.
+          </div>
+        ) : (
+          companyUsers.map(user => (
+            <div key={user.id} className={`bg-white rounded-2xl border border-slate-200 p-4 shadow-sm ${user.status === 'inactive' ? 'opacity-60' : ''}`}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border border-emerald-200 overflow-hidden shrink-0">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    user.name.charAt(0)
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-slate-900 leading-tight truncate">{user.name}</p>
+                  <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                </div>
+                {user.status === 'active' ? (
+                  <span className="flex items-center gap-1 text-emerald-600 text-xs font-semibold shrink-0">
+                    <CheckCircle2 size={14} /> Ativo
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-slate-400 text-xs font-semibold shrink-0">
+                    <XCircle size={14} /> Inativo
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  {user.role === 'admin' ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 border border-purple-100">
+                      <ShieldCheck size={14} /> Administrador
+                    </span>
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 w-fit">
+                        <Shield size={14} /> Colaborador
+                      </span>
+                      {user.permissions && (
+                        <div className="text-[10px] text-slate-500 mt-1 flex gap-1 flex-wrap">
+                          {user.permissions.canCollect && <span className="bg-slate-100 px-1.5 py-0.5 rounded">Coleta</span>}
+                          {user.permissions.canProcess && <span className="bg-slate-100 px-1.5 py-0.5 rounded">Benefic.</span>}
+                          {user.permissions.canManageFinancial && <span className="bg-slate-100 px-1.5 py-0.5 rounded">Financ.</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  <button 
+                    onClick={() => openEditModal(user)}
+                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button 
+                    onClick={() => toggleStatus(user.id, user.status)}
+                    className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition"
+                  >
+                    {user.status === 'active' ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(user.id)}
+                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Modal */}

@@ -105,7 +105,7 @@ const AdminDashboard = () => {
       {/* ============================================================ */}
       {/* ROW 1: KPIs Principais (4 cards) */}
       {/* ============================================================ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
         {/* Volume Total */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden group hover:shadow-md transition-shadow">
           <div className="flex items-start justify-between">

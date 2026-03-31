@@ -85,8 +85,8 @@ const AdminConfiguracoes = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-800">Identidade da Empresa</h2>
+      <div className="mb-6 md:mb-8">
+        <h2 className="text-xl md:text-2xl font-bold text-slate-800">Identidade da Empresa</h2>
         <p className="text-sm text-slate-500 mt-1">Personalize a marca da sua empresa no sistema e no aplicativo.</p>
       </div>
 
