@@ -4,12 +4,20 @@ import {
   Truck, Factory, DollarSign, CheckCircle2, Search, 
   Calendar, User, PackageSearch, PackageOpen, 
   Clock, Scale, ChevronRight, X, Leaf, Warehouse,
-  Camera, MapPin, Cog, ShoppingCart, Package, CalendarDays, BadgeCheck, Edit3, Receipt
+  Camera, MapPin, Cog, ShoppingCart, Package, CalendarDays, BadgeCheck, Edit3, Receipt, RefreshCcw
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const AdminOperacao = () => {
-  const { loads, producers, users, products, updateLoad } = useAgro();
+  const { loads, producers, users, products, updateLoad, currentUser, refreshData } = useAgro();
+
+  const isMaestroOrAdmin = currentUser?.role === 'admin' || currentUser?.role === 'maestro';
+
+  const [editingColeta, setEditingColeta] = useState(false);
+  const [coletaEditForm, setColetaEditForm] = useState({ grossWeight: 0, boxes: 0, date: '' });
+
+  const [editingProcessing, setEditingProcessing] = useState(false);
+  const [processingEditForm, setProcessingEditForm] = useState({ receivedWeight: 0, netWeight: 0, damage: 0, discard: 0 });
 
   // Estados dos Filtros
   const [searchId, setSearchId] = useState('');
@@ -71,17 +79,36 @@ const AdminOperacao = () => {
     <div className="flex flex-col space-y-6">
       
       {/* Cabeçalho */}
-      <div>
-        <h2 className="text-xl md:text-[28px] font-black text-slate-900 flex items-center gap-3 tracking-tight">
-          <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100">
-            <PackageSearch size={20} className="text-brand md:hidden" />
-            <PackageSearch size={24} className="text-brand hidden md:block" />
-          </div>
-          Central de Operações
-        </h2>
-        <p className="text-slate-500 font-medium mt-2 text-sm md:text-base">
-          Monitoramento em tempo real do fluxo de cargas, do campo ao financeiro.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl md:text-[28px] font-black text-slate-900 flex items-center gap-3 tracking-tight">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100">
+              <PackageSearch size={20} className="text-brand md:hidden" />
+              <PackageSearch size={24} className="text-brand hidden md:block" />
+            </div>
+            Central de Operações
+          </h2>
+          <p className="text-slate-500 font-medium mt-2 text-sm md:text-base">
+            Monitoramento em tempo real do fluxo de cargas, do campo ao financeiro.
+          </p>
+        </div>
+
+        <button 
+          onClick={async () => {
+            const loadingToast = toast.loading('Atualizando dados...');
+            try {
+              if (refreshData) await refreshData();
+              toast.success('Dados atualizados com sucesso!', { id: loadingToast });
+            } catch (error) {
+              toast.error('Erro ao atualizar os dados.', { id: loadingToast });
+            }
+          }} 
+          className="flex items-center justify-center gap-2 px-5 py-3 bg-white border border-slate-200 rounded-[1.25rem] hover:bg-slate-50 hover:border-brand-soft hover:text-brand transition-all shadow-sm text-slate-600 font-bold self-start sm:self-auto group"
+        >
+          <RefreshCcw size={18} className="text-slate-400 group-hover:text-brand transition-colors" />
+          <span className="hidden sm:inline">Atualizar Dados</span>
+          <span className="sm:hidden">Atualizar</span>
+        </button>
       </div>
 
       {/* Barra de Filtros */}
@@ -253,7 +280,11 @@ const AdminOperacao = () => {
                 <h3 className="text-xl font-black text-slate-900">Detalhes da Carga</h3>
                 <p className="text-sm text-slate-500 font-medium">#{selectedLoad.id}</p>
               </div>
-              <button onClick={() => setSelectedLoadId(null)} className="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 transition-colors">
+              <button onClick={() => {
+                setSelectedLoadId(null);
+                setEditingColeta(false);
+                setEditingProcessing(false);
+              }} className="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 transition-colors">
                 <X size={20} strokeWidth={2.5} />
               </button>
             </div>
@@ -298,19 +329,79 @@ const AdminOperacao = () => {
 
               {/* Coleta */}
               <div className="space-y-3">
-                <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
-                  <Truck size={16} className="text-blue-600" /> Dados da Coleta
-                </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3">
-                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">Peso Roça</p>
-                    <p className="text-lg font-black text-slate-800">{selectedLoad.collection.grossWeight} <span className="text-xs text-slate-400">kg</span></p>
-                  </div>
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Data</p>
-                    <p className="text-sm font-bold text-slate-700">{new Date(selectedLoad.collection.date).toLocaleDateString('pt-BR')}</p>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                    <Truck size={16} className="text-blue-600" /> Dados da Coleta
+                  </h4>
+                  {isMaestroOrAdmin && !editingColeta && (
+                    <button onClick={() => {
+                      setColetaEditForm({
+                        grossWeight: selectedLoad.collection.grossWeight,
+                        boxes: selectedLoad.collection.boxes,
+                        date: selectedLoad.collection.date.split('T')[0]
+                      });
+                      setEditingColeta(true);
+                    }} className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-1">
+                      <Edit3 size={12} /> Editar
+                    </button>
+                  )}
                 </div>
+
+                {editingColeta ? (
+                  <div className="bg-blue-50/50 border border-blue-200 rounded-xl p-4 animate-in fade-in space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Peso Roça (kg)</label>
+                        <input type="number" className="w-full bg-white border border-blue-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                           value={coletaEditForm.grossWeight} onChange={e => setColetaEditForm({...coletaEditForm, grossWeight: Number(e.target.value)})}/>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Caixas</label>
+                        <input type="number" className="w-full bg-white border border-blue-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                           value={coletaEditForm.boxes} onChange={e => setColetaEditForm({...coletaEditForm, boxes: Number(e.target.value)})}/>
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Data</label>
+                        <input type="date" className="w-full bg-white border border-blue-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                           value={coletaEditForm.date} onChange={e => setColetaEditForm({...coletaEditForm, date: e.target.value})}/>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 justify-end pt-2">
+                      <button onClick={() => setEditingColeta(false)} className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100">Cancelar</button>
+                      <button onClick={async () => {
+                        const historyItem = {
+                          date: new Date().toISOString(),
+                          authorId: currentUser!.id,
+                          authorName: currentUser!.name,
+                          action: 'editou a Coleta',
+                          details: `Alterou Peso Roça de <b>${selectedLoad.collection.grossWeight}kg</b> para <b>${coletaEditForm.grossWeight}kg</b>. Caixas de <b>${selectedLoad.collection.boxes}</b> para <b>${coletaEditForm.boxes}</b>.`
+                        };
+                        await updateLoad(selectedLoad.id, {
+                          collection: {
+                            ...selectedLoad.collection,
+                            grossWeight: coletaEditForm.grossWeight,
+                            boxes: coletaEditForm.boxes,
+                            date: new Date(coletaEditForm.date).toISOString()
+                          },
+                          editHistory: [...(selectedLoad.editHistory || []), historyItem]
+                        });
+                        setEditingColeta(false);
+                        toast.success('Coleta atualizada!');
+                      }} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm">Salvar Alterações</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3">
+                      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">Peso Roça</p>
+                      <p className="text-lg font-black text-slate-800">{selectedLoad.collection.grossWeight} <span className="text-xs text-slate-400">kg</span></p>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Data</p>
+                      <p className="text-sm font-bold text-slate-700">{new Date(selectedLoad.collection.date).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 text-xs text-slate-500">
                   <MapPin size={12} /> {selectedLoad.collection.location}
                 </div>
@@ -337,20 +428,87 @@ const AdminOperacao = () => {
               {/* Beneficiamento */}
               {selectedLoad.processing && (
                 <div className="space-y-3">
-                  <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
-                    <Factory size={16} className="text-violet-600" /> Beneficiamento
-                  </h4>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-violet-50/50 border border-violet-100 rounded-xl p-3">
-                      <p className="text-[10px] font-bold text-violet-600 uppercase tracking-widest mb-1">Peso Recebido</p>
-                      <p className="text-lg font-black text-slate-800">{selectedLoad.processing.receivedWeight} <span className="text-xs text-slate-400">kg</span></p>
-                    </div>
-                    <div className="bg-violet-50/50 border border-violet-100 rounded-xl p-3">
-                      <p className="text-[10px] font-bold text-violet-600 uppercase tracking-widest mb-1">Peso Líquido</p>
-                      <p className="text-lg font-black text-slate-800">{selectedLoad.processing.netWeight} <span className="text-xs text-slate-400">kg</span></p>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                      <Factory size={16} className="text-violet-600" /> Beneficiamento
+                    </h4>
+                    {isMaestroOrAdmin && !editingProcessing && (
+                      <button onClick={() => {
+                        setProcessingEditForm({
+                          receivedWeight: selectedLoad.processing!.receivedWeight,
+                          netWeight: selectedLoad.processing!.netWeight,
+                          damage: selectedLoad.processing!.damage,
+                          discard: selectedLoad.processing!.discard
+                        });
+                        setEditingProcessing(true);
+                      }} className="text-xs font-bold text-slate-400 hover:text-violet-600 transition-colors flex items-center gap-1">
+                        <Edit3 size={12} /> Editar
+                      </button>
+                    )}
                   </div>
+
+                  {editingProcessing ? (
+                    <div className="bg-violet-50/50 border border-violet-200 rounded-xl p-4 animate-in fade-in space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Peso Recebido</label>
+                          <input type="number" className="w-full bg-white border border-violet-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-violet-400"
+                             value={processingEditForm.receivedWeight} onChange={e => setProcessingEditForm({...processingEditForm, receivedWeight: Number(e.target.value)})}/>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Peso Líquido</label>
+                          <input type="number" className="w-full bg-white border border-violet-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-violet-400"
+                             value={processingEditForm.netWeight} onChange={e => setProcessingEditForm({...processingEditForm, netWeight: Number(e.target.value)})}/>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Avarias</label>
+                          <input type="number" className="w-full bg-white border border-violet-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-violet-400"
+                             value={processingEditForm.damage} onChange={e => setProcessingEditForm({...processingEditForm, damage: Number(e.target.value)})}/>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Descarte</label>
+                          <input type="number" className="w-full bg-white border border-violet-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-violet-400"
+                             value={processingEditForm.discard} onChange={e => setProcessingEditForm({...processingEditForm, discard: Number(e.target.value)})}/>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 justify-end pt-2">
+                        <button onClick={() => setEditingProcessing(false)} className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100">Cancelar</button>
+                        <button onClick={async () => {
+                          const historyItem = {
+                            date: new Date().toISOString(),
+                            authorId: currentUser!.id,
+                            authorName: currentUser!.name,
+                            action: 'editou o Beneficiamento',
+                            details: `Alterou Recebido de <b>${selectedLoad.processing!.receivedWeight}kg</b> para <b>${processingEditForm.receivedWeight}kg</b> e Líquido de <b>${selectedLoad.processing!.netWeight}kg</b> para <b>${processingEditForm.netWeight}kg</b>.`
+                          };
+                          await updateLoad(selectedLoad.id, {
+                            processing: {
+                              ...selectedLoad.processing!,
+                              receivedWeight: processingEditForm.receivedWeight,
+                              netWeight: processingEditForm.netWeight,
+                              damage: processingEditForm.damage,
+                              discard: processingEditForm.discard,
+                              weightDifference: processingEditForm.receivedWeight - processingEditForm.netWeight
+                            },
+                            editHistory: [...(selectedLoad.editHistory || []), historyItem]
+                          });
+                          setEditingProcessing(false);
+                          toast.success('Beneficiamento atualizado!');
+                        }} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 shadow-sm">Salvar Alterações</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-violet-50/50 border border-violet-100 rounded-xl p-3">
+                        <p className="text-[10px] font-bold text-violet-600 uppercase tracking-widest mb-1">Peso Recebido</p>
+                        <p className="text-lg font-black text-slate-800">{selectedLoad.processing.receivedWeight} <span className="text-xs text-slate-400">kg</span></p>
+                      </div>
+                      <div className="bg-violet-50/50 border border-violet-100 rounded-xl p-3">
+                        <p className="text-[10px] font-bold text-violet-600 uppercase tracking-widest mb-1">Peso Líquido</p>
+                        <p className="text-lg font-black text-slate-800">{selectedLoad.processing.netWeight} <span className="text-xs text-slate-400">kg</span></p>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-3 gap-2">
                     <div className="bg-red-50/50 border border-red-100 rounded-xl p-2.5 text-center">
@@ -618,6 +776,30 @@ const AdminOperacao = () => {
                   ))}
                 </div>
               </div>
+
+              {/* Histórico de Auditoria */}
+              {selectedLoad.editHistory && selectedLoad.editHistory.length > 0 && (
+                <div className="space-y-3 pb-8">
+                  <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                    <Edit3 size={16} className="text-slate-500" /> Trilha de Auditoria
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedLoad.editHistory.map((edit, idx) => (
+                      <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-sm flex items-start gap-3 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-slate-400"></div>
+                        <div className="flex-1">
+                          <p className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                            <span>{edit.authorName}</span>
+                            <span className="text-[10px] text-slate-400 font-medium">{new Date(edit.date).toLocaleString('pt-BR')}</span>
+                          </p>
+                          <p className="text-xs text-slate-600 mb-1">{edit.action}</p>
+                          <p className="text-[11px] text-slate-500 font-medium bg-white border border-slate-100 p-2 rounded-lg" dangerouslySetInnerHTML={{ __html: edit.details }}></p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
             </div>
           </div>

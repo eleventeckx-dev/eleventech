@@ -36,7 +36,7 @@ const AdminLayout = () => {
 
   // Menu atualizado com Financeiro e Estoque e Filtrado para o perfil do Financeiro
   const menu = [
-    { name: 'Dashboard', path: `/${companySlug}/app/dashboard`, icon: LayoutDashboard },
+    { name: 'Relatórios', path: `/${companySlug}/app/dashboard`, icon: LayoutDashboard },
     { name: 'Operação', path: `/${companySlug}/app/operacao`, icon: Activity },
     { name: 'Financeiro', path: `/${companySlug}/app/financeiro`, icon: DollarSign },
     { name: 'Estoque', path: `/${companySlug}/app/estoque`, icon: Warehouse },
@@ -152,7 +152,7 @@ const AdminLayout = () => {
               )}
             </div>
             <h1 className="text-lg md:text-2xl font-bold text-slate-800 tracking-tight truncate capitalize">
-              {location.pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}
+              {location.pathname.endsWith('/dashboard') ? 'Relatórios' : (location.pathname.split('/').pop()?.replace('-', ' ') || 'Relatórios')}
             </h1>
           </div>
           <div className="flex items-center gap-2 md:gap-4">

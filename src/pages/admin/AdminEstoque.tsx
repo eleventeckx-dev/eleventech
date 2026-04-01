@@ -5,8 +5,8 @@ import { toast } from 'sonner';
 
 const AdminEstoque = () => {
   const { loads, producers, products, updateLoad, currentUser } = useAgro();
-  const [searchProducer, setSearchProducer] = useState('');
-  const [releaseModal, setReleaseModal] = useState<{ loadId: string; available: number } | null>(null);
+  const [searchProduct, setSearchProduct] = useState('');
+  const [releaseModal, setReleaseModal] = useState<{ productName: string; available: number } | null>(null);
   const [releaseForm, setReleaseForm] = useState({ toProduction: '', toBulk: '' });
 
   const companyLoads = loads.filter(l => l.companyId === currentUser?.companyId);
@@ -19,38 +19,99 @@ const AdminEstoque = () => {
   const totalStockWeight = stockLoads.reduce((acc, l) => acc + (l.processing?.stockWeight || 0), 0);
   const totalGreenWeight = stockLoads.reduce((acc, l) => acc + (l.processing?.greenWeight || 0), 0);
 
-  const filteredLoads = stockLoads.filter(load => {
-    if (!searchProducer) return true;
-    const prod = producers.find(p => p.id === load.producerId);
-    return prod?.name.toLowerCase().includes(searchProducer.toLowerCase());
+  // Agrupamento por produto
+  const groupedProducts = stockLoads.reduce((acc, load) => {
+    const productName = load.collection.type;
+    if (!acc[productName]) {
+      acc[productName] = {
+        name: productName,
+        stockWeight: 0,
+        greenWeight: 0,
+        lastUpdated: load.updatedAt,
+      };
+    }
+    acc[productName].stockWeight += load.processing!.stockWeight || 0;
+    acc[productName].greenWeight += load.processing!.greenWeight || 0;
+    
+    // Obter data mais recente
+    if (new Date(load.updatedAt) > new Date(acc[productName].lastUpdated)) {
+      acc[productName].lastUpdated = load.updatedAt;
+    }
+    return acc;
+  }, {} as Record<string, { name: string; stockWeight: number; greenWeight: number; lastUpdated: string }>);
+
+  const groupedStock = Object.values(groupedProducts);
+
+  const filteredStock = groupedStock.filter(item => {
+    if (!searchProduct) return true;
+    return item.name.toLowerCase().includes(searchProduct.toLowerCase());
   });
 
-  const handleRelease = (e: React.FormEvent) => {
+  const handleRelease = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!releaseModal) return;
 
-    const toProd = Number(releaseForm.toProduction) || 0;
-    const toBulk = Number(releaseForm.toBulk) || 0;
-    const total = toProd + toBulk;
+    let toProd = Number(releaseForm.toProduction) || 0;
+    let toBulk = Number(releaseForm.toBulk) || 0;
+    const totalReq = toProd + toBulk;
 
-    if (total <= 0 || total > releaseModal.available + 0.01) {
+    if (totalReq <= 0 || totalReq > releaseModal.available + 0.01) {
       toast.error('O total a liberar não pode exceder o peso disponível no estoque.');
       return;
     }
 
-    const load = loads.find(l => l.id === releaseModal.loadId);
-    if (!load?.processing) return;
+    const { productName } = releaseModal;
+    
+    // Pegar todas as cargas do produto em estoque
+    const productLoads = stockLoads.filter(l => l.collection.type === productName);
+    
+    // Ordenar pelo mais antigo primeiro (FIFO) - data da coleta ou updatedAt
+    productLoads.sort((a, b) => new Date(a.collection.date).getTime() - new Date(b.collection.date).getTime());
 
-    updateLoad(releaseModal.loadId, {
-      processing: {
-        ...load.processing,
-        stockWeight: Math.max(0, load.processing.stockWeight - total),
-        productionWeight: load.processing.productionWeight + toProd,
-        bulkSaleWeight: load.processing.bulkSaleWeight + toBulk,
+    const loadingToast = toast.loading(`Liberando ${productName}...`);
+
+    for (const load of productLoads) {
+      if (toProd <= 0 && toBulk <= 0) break; // Finalizou
+
+      const availableInLoad = load.processing!.stockWeight;
+      if (availableInLoad <= 0) continue;
+
+      let deductProd = 0;
+      let deductBulk = 0;
+
+      // Distribuir para produção primeiro
+      if (toProd > 0) {
+        deductProd = Math.min(availableInLoad, toProd);
+        toProd -= deductProd;
       }
-    });
+      
+      // Se sobrar estoque na carga atual, distribuir para granel
+      const remainingInLoad = availableInLoad - deductProd;
+      if (toBulk > 0 && remainingInLoad > 0) {
+        deductBulk = Math.min(remainingInLoad, toBulk);
+        toBulk -= deductBulk;
+      }
 
-    toast.success(`Liberados ${total.toFixed(2)} kg do estoque!`);
+      const historyItem = {
+        date: new Date().toISOString(),
+        authorId: currentUser!.id,
+        authorName: currentUser!.name,
+        action: 'liberou estoque via FIFO/Agrupamento',
+        details: `Reduziu <b>${(deductProd + deductBulk).toFixed(2)}kg</b> do estoque na liberação mista.`
+      };
+
+      await updateLoad(load.id, {
+        processing: {
+          ...load.processing!,
+          stockWeight: Math.max(0, load.processing!.stockWeight - (deductProd + deductBulk)),
+          productionWeight: load.processing!.productionWeight + deductProd,
+          bulkSaleWeight: load.processing!.bulkSaleWeight + deductBulk,
+        },
+        editHistory: [...(load.editHistory || []), historyItem]
+      });
+    }
+
+    toast.success(`Liberados ${totalReq.toFixed(2)} kg de ${productName} com sucesso!`, { id: loadingToast });
     setReleaseModal(null);
     setReleaseForm({ toProduction: '', toBulk: '' });
   };
@@ -76,7 +137,7 @@ const AdminEstoque = () => {
           <div>
             <p className="text-sm font-medium text-slate-500 mb-1">Total em Estoque</p>
             <h3 className="text-3xl font-bold text-slate-800">{totalStockWeight.toFixed(0)} <span className="text-base font-medium text-slate-400">kg</span></h3>
-            <p className="text-xs text-slate-400 font-medium mt-2">{stockLoads.length} lotes armazenados</p>
+            <p className="text-xs text-slate-400 font-medium mt-2">{groupedStock.length} produtos armazenados</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
             <Warehouse size={24} />
@@ -115,18 +176,18 @@ const AdminEstoque = () => {
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
-              type="text" placeholder="Buscar produtor..." 
+              type="text" placeholder="Buscar produto..." 
               className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium text-slate-700 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 outline-none transition-all w-full md:w-56"
-              value={searchProducer} onChange={(e) => setSearchProducer(e.target.value)}
+              value={searchProduct} onChange={(e) => setSearchProduct(e.target.value)}
             />
           </div>
         </div>
 
-        {filteredLoads.length === 0 ? (
+        {filteredStock.length === 0 ? (
           <div className="text-center py-12 text-slate-400">
             <Warehouse size={40} className="mx-auto mb-3 opacity-30" />
             <p className="font-bold text-slate-600">Estoque vazio</p>
-            <p className="text-sm">Nenhum produto armazenado no momento.</p>
+            <p className="text-sm">Nenhum produto armazenado no momento correspondente ao filtro.</p>
           </div>
         ) : (
           <>
@@ -134,65 +195,53 @@ const AdminEstoque = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="pb-3 text-sm font-semibold text-slate-500">ID</th>
-                  <th className="pb-3 text-sm font-semibold text-slate-500">Produtor</th>
                   <th className="pb-3 text-sm font-semibold text-slate-500">Produto</th>
-                  <th className="pb-3 text-sm font-semibold text-slate-500">Estoque</th>
-                  <th className="pb-3 text-sm font-semibold text-slate-500">Verde</th>
-                  <th className="pb-3 text-sm font-semibold text-slate-500">Data</th>
-                  <th className="pb-3 text-sm font-semibold text-slate-500 text-right">Ação</th>
+                  <th className="pb-3 text-sm font-semibold text-slate-500">Estoque Consolidado</th>
+                  <th className="pb-3 text-sm font-semibold text-slate-500">Mistura Verde</th>
+                  <th className="pb-3 text-sm font-semibold text-slate-500">Última Adição</th>
+                  <th className="pb-3 text-sm font-semibold text-slate-500 text-right">Ações Rápidas</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filteredLoads.map(load => {
-                  const prod = producers.find(p => p.id === load.producerId);
-                  const product = products.find(p => p.name.toLowerCase() === load.collection.type.toLowerCase());
+                {filteredStock.map(item => {
+                  const product = products.find(p => p.name.toLowerCase() === item.name.toLowerCase());
 
                   return (
-                    <tr key={load.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="py-4 text-sm font-bold text-slate-900">#{load.id.slice(-6)}</td>
+                    <tr key={item.name} className="hover:bg-slate-50/50 transition-colors">
                       <td className="py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 font-bold flex items-center justify-center text-xs border border-amber-100">
-                            {prod?.name.charAt(0)}
-                          </div>
-                          <span className="text-sm font-medium text-slate-700">{prod?.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-md bg-slate-50 overflow-hidden border border-slate-100 shrink-0">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-slate-50 overflow-hidden border border-slate-100 shrink-0">
                             {product?.imageUrl ? (
                               <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center"><Package size={12} className="text-slate-300" /></div>
+                              <div className="w-full h-full flex items-center justify-center"><Package size={16} className="text-slate-300" /></div>
                             )}
                           </div>
-                          <span className="text-sm text-slate-600">{load.collection.type}</span>
+                          <span className="text-sm font-bold text-slate-800">{item.name}</span>
                         </div>
                       </td>
-                      <td className="py-4 text-sm font-bold text-amber-700">
-                        {load.processing?.stockWeight} kg
+                      <td className="py-4 text-base font-black text-amber-700">
+                        {item.stockWeight.toFixed(2)} kg
                       </td>
                       <td className="py-4">
-                        {(load.processing?.greenWeight || 0) > 0 ? (
-                          <span className="text-xs font-bold text-lime-600 bg-lime-50 px-2 py-1 rounded-lg border border-lime-100">
-                            {load.processing?.greenWeight} kg
+                        {item.greenWeight > 0 ? (
+                          <span className="text-xs font-bold text-lime-600 bg-lime-50 px-2.5 py-1.5 rounded-lg border border-lime-100">
+                            {item.greenWeight.toFixed(2)} kg
                           </span>
                         ) : (
                           <span className="text-xs text-slate-400">—</span>
                         )}
                       </td>
-                      <td className="py-4 text-sm text-slate-500">
-                        {new Date(load.updatedAt).toLocaleDateString('pt-BR')}
+                      <td className="py-4 text-sm font-medium text-slate-500">
+                        {new Date(item.lastUpdated).toLocaleDateString('pt-BR')}
                       </td>
                       <td className="py-4 text-right">
                         <button 
-                          onClick={() => setReleaseModal({ loadId: load.id, available: load.processing?.stockWeight || 0 })}
+                          onClick={() => setReleaseModal({ productName: item.name, available: item.stockWeight })}
                           className="bg-amber-50 text-amber-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-100 transition border border-amber-200"
                         >
                           <ArrowRightLeft size={14} className="inline mr-1.5" />
-                          Liberar
+                          Liberar Produto
                         </button>
                       </td>
                     </tr>
@@ -204,39 +253,38 @@ const AdminEstoque = () => {
 
           {/* Mobile Cards */}
           <div className="block md:hidden space-y-3">
-            {filteredLoads.map(load => {
-              const prod = producers.find(p => p.id === load.producerId);
-              const product = products.find(p => p.name.toLowerCase() === load.collection.type.toLowerCase());
+            {filteredStock.map(item => {
+              const product = products.find(p => p.name.toLowerCase() === item.name.toLowerCase());
               return (
-                <div key={load.id} className="bg-slate-50 rounded-2xl border border-slate-100 p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 font-bold flex items-center justify-center text-sm border border-amber-100 shrink-0">
-                      {prod?.name.charAt(0)}
+                <div key={item.name} className="bg-slate-50 rounded-2xl border border-slate-100 p-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 overflow-hidden shrink-0">
+                      {product?.imageUrl ? (
+                        <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                      ) : (
+                         <div className="w-full h-full flex items-center justify-center"><Package size={20} className="text-slate-300" /></div>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-slate-800 truncate">{prod?.name}</p>
-                      <p className="text-xs text-slate-500">{load.collection.type} • #{load.id.slice(-6)}</p>
+                      <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-0.5">Visão Geral</p>
+                      <p className="text-base font-black text-slate-800 truncate">{item.name}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    <div className="bg-white rounded-xl p-2.5 border border-slate-100 text-center">
-                      <p className="text-[9px] font-bold text-amber-600 uppercase">Estoque</p>
-                      <p className="text-sm font-black text-slate-800">{load.processing?.stockWeight} kg</p>
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    <div className="bg-white rounded-xl p-3 border border-slate-100 text-center flex items-center flex-col justify-center">
+                      <p className="text-[9px] font-bold text-amber-600 uppercase">Disponível</p>
+                      <p className="text-lg font-black text-slate-800">{item.stockWeight.toFixed(2)} kg</p>
                     </div>
-                    <div className="bg-white rounded-xl p-2.5 border border-slate-100 text-center">
-                      <p className="text-[9px] font-bold text-lime-600 uppercase">Verde</p>
-                      <p className="text-sm font-black text-slate-800">{(load.processing?.greenWeight || 0) > 0 ? `${load.processing?.greenWeight} kg` : '—'}</p>
-                    </div>
-                    <div className="bg-white rounded-xl p-2.5 border border-slate-100 text-center">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase">Data</p>
-                      <p className="text-xs font-bold text-slate-600">{new Date(load.updatedAt).toLocaleDateString('pt-BR')}</p>
+                    <div className="bg-white rounded-xl p-3 border border-slate-100 text-center flex items-center flex-col justify-center">
+                      <p className="text-[9px] font-bold text-lime-600 uppercase">Verde (Mistura)</p>
+                      <p className="text-lg font-black text-slate-800">{item.greenWeight > 0 ? `${item.greenWeight.toFixed(2)} kg` : '—'}</p>
                     </div>
                   </div>
                   <button 
-                    onClick={() => setReleaseModal({ loadId: load.id, available: load.processing?.stockWeight || 0 })}
-                    className="w-full bg-amber-50 text-amber-700 py-2.5 rounded-xl text-xs font-bold hover:bg-amber-100 transition border border-amber-200 flex items-center justify-center gap-1.5"
+                    onClick={() => setReleaseModal({ productName: item.name, available: item.stockWeight })}
+                    className="w-full bg-amber-50 text-amber-700 py-3 rounded-xl text-sm font-black hover:bg-amber-100 transition border border-amber-200 flex items-center justify-center gap-2 shadow-sm"
                   >
-                    <ArrowRightLeft size={14} /> Liberar do Estoque
+                    <ArrowRightLeft size={16} /> Liberar Produção / Granel
                   </button>
                 </div>
               );
@@ -250,8 +298,8 @@ const AdminEstoque = () => {
       {releaseModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-bold text-slate-900 mb-2">Liberar do Estoque</h3>
-            <p className="text-sm text-slate-500 mb-6">Disponível: <strong className="text-amber-700">{releaseModal.available.toFixed(2)} kg</strong></p>
+            <h3 className="text-xl font-bold text-slate-900 mb-1">Liberar {releaseModal.productName}</h3>
+            <p className="text-sm text-slate-500 mb-6">Disponível em Estoque: <strong className="text-amber-700">{releaseModal.available.toFixed(2)} kg</strong></p>
 
             <form onSubmit={handleRelease} className="space-y-5">
               <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 space-y-3">

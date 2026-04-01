@@ -32,6 +32,7 @@ import {
   UserIndexRedirect,
   UserColeta, 
   UserBeneficiamento, 
+  UserEstoque,
   UserPerfil 
 } from "./pages/user/UserPages";
 import ProducerDashboard from "./pages/producer/ProducerDashboard";
@@ -82,6 +83,7 @@ const App = () => (
                 <Route index element={<UserIndexRedirect />} />
                 <Route path="coleta" element={<UserColeta />} />
                 <Route path="beneficiamento" element={<UserBeneficiamento />} />
+                <Route path="estoque" element={<UserEstoque />} />
                 <Route path="perfil" element={<UserPerfil />} />
               </Route>
             </Route>

@@ -367,6 +367,7 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
         processing: l.processing_record,
         financial: l.financial_record,
         payment: l.payment_record,
+        editHistory: l.edit_history || [],
         createdAt: l.created_at,
         updatedAt: l.updated_at
       }));
@@ -456,6 +457,7 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (updates.processing) dbUpdate.processing_record = updates.processing;
     if (updates.financial) dbUpdate.financial_record = updates.financial;
     if (updates.payment) dbUpdate.payment_record = updates.payment;
+    if (updates.editHistory) dbUpdate.edit_history = updates.editHistory;
 
     const { error } = await supabase.from('loads').update(dbUpdate).eq('id', id);
     if (error) throw error;

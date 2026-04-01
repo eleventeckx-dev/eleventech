@@ -124,6 +124,14 @@ export type PaymentRecord = {
   observations?: string;
 };
 
+export type LoadEditHistory = {
+  date: string;
+  authorId: string;
+  authorName: string;
+  action: string;
+  details: string;
+};
+
 export type LoadStatus = 'coletado' | 'beneficiado' | 'pagamento_programado' | 'pago';
 
 export type Load = {
@@ -135,6 +143,7 @@ export type Load = {
   processing?: ProcessingRecord;
   financial?: FinancialRecord;
   payment?: PaymentRecord;
+  editHistory?: LoadEditHistory[];
   createdAt: string;
   updatedAt: string;
 };

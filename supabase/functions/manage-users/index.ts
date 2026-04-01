@@ -42,7 +42,9 @@ serve(async (req) => {
     const execRole = executor.user_metadata?.role || executor.app_metadata?.role
     const execCompany = executor.user_metadata?.companyId || executor.app_metadata?.companyId
 
-    if (execRole !== 'maestro' && execRole !== 'admin') {
+    const isCollabCreatingProducer = execRole === 'collaborator' && userData?.role === 'producer';
+
+    if (execRole !== 'maestro' && execRole !== 'admin' && !isCollabCreatingProducer) {
       throw new Error('Operação negada. Apenas administradores do sistema podem executar gerência avançada.')
     }
 
@@ -93,15 +95,24 @@ serve(async (req) => {
       if (!userId) throw new Error('ID do alvo não providenciado')
 
       // Auditoria RLS Interna: Impedir admin de empresa alterar um usuário que não seja da mesma empresa
-      if (execRole === 'admin') {
+      if (execRole === 'admin' || execRole === 'collaborator') {
          const { data: checkTarget } = await supabaseAdmin.auth.admin.getUserById(userId)
          const targetCompany = checkTarget.user?.user_metadata?.companyId || checkTarget.user?.app_metadata?.companyId
          if (targetCompany !== execCompany) {
              throw new Error('Tentativa de invasão bloqueada: usuário-alvo pertence a outra organização.')
          }
-         // Proteção extra: Admin local não pode virar maestro, nem transformar alguém em maestro.
-         if (userData.role === 'maestro') {
-             throw new Error('Modificação de nível Maestro não autorizada.')
+         
+         const targetRole = checkTarget.user?.user_metadata?.role || checkTarget.user?.app_metadata?.role;
+         
+         if (execRole === 'collaborator') {
+             if (targetRole !== 'producer' || userData.role !== 'producer') {
+                 throw new Error('Colaborador só pode gerenciar produtores da mesma empresa.')
+             }
+         } else {
+             // Proteção extra: Admin local não pode virar maestro, nem transformar alguém em maestro.
+             if (userData.role === 'maestro' || targetRole === 'maestro') {
+                 throw new Error('Modificação de nível Maestro não autorizada.')
+             }
          }
       }
 
@@ -150,11 +161,18 @@ serve(async (req) => {
       if (!userId) throw new Error('ID para deleção pendente')
       
       // Auditoria RLS Interna
-      if (execRole === 'admin') {
+      if (execRole === 'admin' || execRole === 'collaborator') {
          const { data: checkTarget } = await supabaseAdmin.auth.admin.getUserById(userId)
          const targetCompany = checkTarget.user?.user_metadata?.companyId || checkTarget.user?.app_metadata?.companyId
          if (targetCompany !== execCompany) {
              throw new Error('Tentativa de invasão bloqueada ao excluir.')
+         }
+         
+         if (execRole === 'collaborator') {
+             const targetRole = checkTarget.user?.user_metadata?.role || checkTarget.user?.app_metadata?.role;
+             if (targetRole !== 'producer') {
+                 throw new Error('Colaborador só pode gerenciar produtores da mesma empresa.')
+             }
          }
       }
 

@@ -12,8 +12,8 @@ const AdminUsuarios = () => {
   const { users, currentUser, companies, addUser, updateUser, deleteUser } = useAgro();
   const { companySlug } = useParams<{ companySlug: string }>();
   
-  // Filtra apenas os usuários da mesma empresa (esconde Maestros)
-  const companyUsers = users.filter(u => u.companyId === currentUser?.companyId && u.role !== 'maestro');
+  // Filtra apenas os usuários da mesma empresa (esconde Maestros e Produtores - produtores são geridos em AdminProdutores)
+  const companyUsers = users.filter(u => u.companyId === currentUser?.companyId && u.role !== 'maestro' && u.role !== 'producer');
   const company = companies.find(c => c.id === currentUser?.companyId);
 
   const [copiedLink, setCopiedLink] = useState(false);
@@ -424,20 +424,30 @@ const AdminUsuarios = () => {
                       { key: 'canCollect', label: 'Pode Registrar Nova Coleta' },
                       { key: 'canProcess', label: 'Pode Fazer Beneficiamento' },
                       { key: 'canManageFinancial', label: 'Pode Fechar o Financeiro' },
-                    ].map(perm => (
-                      <label key={perm.key} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-100 cursor-pointer transition">
-                        <input 
-                          type="checkbox" 
-                          className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
-                          checked={form.permissions[perm.key as keyof typeof form.permissions]}
-                          onChange={(e) => setForm({
-                            ...form, 
-                            permissions: { ...form.permissions, [perm.key]: e.target.checked }
-                          })}
-                        />
-                        <span className="text-sm font-medium text-slate-700">{perm.label}</span>
-                      </label>
-                    ))}
+                    ].map(perm => {
+                      const isFinancial = perm.key === 'canManageFinancial';
+                      const isOperational = perm.key === 'canCollect' || perm.key === 'canProcess';
+                      
+                      const isDisabled = 
+                        (isFinancial && (form.permissions.canCollect || form.permissions.canProcess)) || 
+                        (isOperational && form.permissions.canManageFinancial);
+
+                      return (
+                        <label key={perm.key} className={`flex items-center gap-3 p-2 rounded-lg transition ${isDisabled ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:bg-slate-100 cursor-pointer'}`}>
+                          <input 
+                            type="checkbox" 
+                            disabled={isDisabled}
+                            className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            checked={form.permissions[perm.key as keyof typeof form.permissions]}
+                            onChange={(e) => setForm({
+                              ...form, 
+                              permissions: { ...form.permissions, [perm.key]: e.target.checked }
+                            })}
+                          />
+                          <span className={`text-sm font-medium ${isDisabled ? 'text-slate-400' : 'text-slate-700'}`}>{perm.label}</span>
+                        </label>
+                      );
+                    })}
                   </div>
                   <p className="text-xs text-slate-500 mt-3 ml-1 bg-white p-2 rounded-lg border border-slate-100">
                     * O usuário conseguirá visualizar a lista de todas as etapas, mas os botões de ação estarão bloqueados onde ele não tiver permissão.

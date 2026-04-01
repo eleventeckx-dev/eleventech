@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAgro } from '../../contexts/AgroContext';
-import { Factory, Package, ArrowRight, Lock, Camera, X, Leaf, Warehouse, ShoppingCart, Cog, Calendar, Clock } from 'lucide-react';
+import { Factory, Package, ArrowRight, Lock as LockIcon, Camera, X, Leaf, Warehouse, ShoppingCart, Cog, Calendar, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { PremiumCard, ReadOnlyBanner, EmptyState, FloatingLabelInput } from '../../components/shared/UserUIComponents';
 import { uploadImage } from '../../lib/storage';
@@ -14,7 +14,7 @@ const UserBeneficiamento = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [form, setForm] = useState({ 
     receivedWeight: '', damage: '', discard: '', greenWeight: '',
-    stockWeight: '', productionWeight: '', bulkSaleWeight: '',
+    stockNormalWeight: '', stockGreenWeight: '', productionWeight: '', bulkSaleWeight: '',
     observations: '' 
   });
 
@@ -26,11 +26,12 @@ const UserBeneficiamento = () => {
   const received = Number(form.receivedWeight) || 0;
   const damage = Number(form.damage) || 0;
   const discard = Number(form.discard) || 0;
-  const greenWeight = Number(form.greenWeight) || 0;
+  const greenWeight = Number(form.stockGreenWeight) || 0;
   const netWeight = Math.max(0, received - damage - discard);
   const diffWeight = received - fieldWeight;
 
-  const stockW = Number(form.stockWeight) || 0;
+  const stockNormal = Number(form.stockNormalWeight) || 0;
+  const stockW = stockNormal + greenWeight;
   const productionW = Number(form.productionWeight) || 0;
   const bulkW = Number(form.bulkSaleWeight) || 0;
   const totalDestination = stockW + productionW + bulkW;
@@ -77,10 +78,22 @@ const UserBeneficiamento = () => {
     
     toast.success('Beneficiamento concluído!');
     setSelectedLoadId('');
-    setForm({ receivedWeight: '', damage: '', discard: '', greenWeight: '', stockWeight: '', productionWeight: '', bulkSaleWeight: '', observations: '' });
+    setForm({ receivedWeight: '', damage: '', discard: '', greenWeight: '', stockNormalWeight: '', stockGreenWeight: '', productionWeight: '', bulkSaleWeight: '', observations: '' });
     setPhotos([]);
   };
 
+
+  if (!hasPermission) {
+    return (
+      <div className="p-6 flex flex-col items-center justify-center min-h-[70vh] text-center">
+        <div className="w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner border border-slate-100">
+          <LockIcon size={40} className="text-slate-300" strokeWidth={1.5} />
+        </div>
+        <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-3">Acesso Restrito</h2>
+        <p className="text-slate-500 font-medium max-w-xs">Seu perfil não possui acesso autorizado para realizar entregas e conferências de beneficiamento.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">
@@ -88,8 +101,6 @@ const UserBeneficiamento = () => {
         <h2 className="text-[28px] font-black text-brand tracking-tight">Beneficiamento</h2>
         <p className="opacity-60 font-medium tracking-tight">Conferência de recebimento</p>
       </div>
-
-      {!hasPermission && <ReadOnlyBanner text="Modo leitura. Você não tem permissão para realizar as conferências no beneficiamento." />}
 
       {pendingLoads.length === 0 ? (
         <EmptyState icon={Factory} title="Pátio Limpo" description="Não há cargas aguardando conferência no momento." /> ) : (
@@ -101,8 +112,8 @@ const UserBeneficiamento = () => {
             return (
               <PremiumCard 
                 key={load.id} 
-                onClick={() => hasPermission && setSelectedLoadId(load.id)} 
-                className={`flex items-center justify-between group border border-slate-100 shadow-sm ${!hasPermission ? 'opacity-70' : 'hover:border-brand-soft'}`}
+                onClick={() => setSelectedLoadId(load.id)} 
+                className="flex items-center justify-between group border border-slate-100 shadow-sm hover:border-brand-soft"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-brand-soft text-brand rounded-xl flex items-center justify-center overflow-hidden border border-brand-soft shrink-0 shadow-inner">
@@ -121,8 +132,8 @@ const UserBeneficiamento = () => {
                     </div>
                   </div>
                 </div>
-                <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center transition-all ${hasPermission ? 'bg-brand/10 text-brand group-hover:bg-brand group-hover:text-white group-active:scale-95' : 'bg-slate-50 text-slate-300'}`}>
-                  {hasPermission ? <ArrowRight size={18} strokeWidth={2.5} /> : <Lock size={16} />}
+                <div className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center transition-all bg-brand/10 text-brand group-hover:bg-brand group-hover:text-white group-active:scale-95">
+                  <ArrowRight size={18} strokeWidth={2.5} />
                 </div>
               </PremiumCard>
             );
@@ -130,7 +141,7 @@ const UserBeneficiamento = () => {
         </div>
       )}
 
-      {selectedLoadId && selectedLoad && hasPermission && (
+      {selectedLoadId && selectedLoad && (
         <div className="fixed inset-0 z-50 bg-[#F8FAFC] flex flex-col animate-in slide-in-from-bottom-full duration-300 overflow-hidden">
           <div className="h-16 bg-white/80 backdrop-blur-xl border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-10">
             <h2 className="text-lg font-black text-brand tracking-tight">Conferência</h2>
@@ -189,22 +200,14 @@ const UserBeneficiamento = () => {
                 {/* Seção 2: Quebras e Perdas */}
                 <div className="space-y-5">
                   <h3 className="font-black text-brand text-lg border-b border-slate-100 pb-2">Quebras e Perdas</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <FloatingLabelInput label="Avarias (kg)" type="number" step="0.01" value={form.damage} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({...form, damage: e.target.value})} />
-                    <FloatingLabelInput label="Descarte (kg)" type="number" step="0.01" value={form.discard} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({...form, discard: e.target.value})} />
                   </div>
                 </div>
 
                 <div className="h-px bg-slate-100 my-8"></div>
 
-                {/* Seção 3: Classificação — Verde */}
-                <div className="space-y-5">
-                  <h3 className="font-black text-brand text-lg border-b border-slate-100 pb-2 flex items-center gap-2">
-                    <Leaf size={18} className="text-brand" /> Classificação
-                  </h3>
-                  <FloatingLabelInput label="Produtos Verdes (kg)" type="number" step="0.01" value={form.greenWeight} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({...form, greenWeight: e.target.value})} icon={Leaf} />
-                  <p className="text-xs font-bold opacity-30 -mt-2">Informe a quantidade de produtos que ainda não estão maduros. Informativo.</p>
-                </div>
+                {/* Seção 3 removida (Classificação) pois integrará as métricas de Estoque. Substituído por linha em branco para manter formatação do form */}
 
                 {/* Card Resultado Líquido */}
                 <div className="btn-brand rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden mt-8">
@@ -236,7 +239,10 @@ const UserBeneficiamento = () => {
                         <div className="flex items-center gap-2 text-sm font-black text-brand uppercase tracking-wider">
                           <Warehouse size={16} /> Estoque (Maturação)
                         </div>
-                        <FloatingLabelInput label="Peso para Estoque (kg)" type="number" step="0.01" value={form.stockWeight} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({...form, stockWeight: e.target.value})} />
+                        <div className="flex flex-col gap-3">
+                          <FloatingLabelInput label="Produtos Normais (kg)" type="number" step="0.01" value={form.stockNormalWeight} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({...form, stockNormalWeight: e.target.value})} />
+                          <FloatingLabelInput label="Produtos Verdes (kg)" type="number" step="0.01" value={form.stockGreenWeight} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({...form, stockGreenWeight: e.target.value})} icon={Leaf} />
+                        </div>
                       </div>
 
                       <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 space-y-3">

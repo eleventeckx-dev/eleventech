@@ -89,6 +89,54 @@ const AdminDashboard = () => {
     };
   }, [companyLoads, companyProducers]);
 
+  // Pagamentos a Vencer em até 3 dias (ou vencidos)
+  const upcomingPayments = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const maxDate = new Date();
+    maxDate.setDate(today.getDate() + 3);
+    maxDate.setHours(23, 59, 59, 999);
+
+    return companyLoads
+      .filter(l => l.status === 'pagamento_programado' && l.financial && l.financial.scheduledPaymentDate)
+      .filter(l => {
+        const payDateStr = l.financial!.scheduledPaymentDate;
+        let payDate;
+        if (payDateStr.includes('-')) {
+          const [y, m, d] = payDateStr.split('T')[0].split('-');
+          payDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+        } else {
+          payDate = new Date(payDateStr);
+        }
+        return payDate <= maxDate;
+      })
+      .map(l => {
+        const prod = companyProducers.find(p => p.id === l.producerId);
+        
+        const payDateStr = l.financial!.scheduledPaymentDate;
+        let payDate: Date;
+        if (payDateStr.includes('-')) {
+          const [y, m, d] = payDateStr.split('T')[0].split('-');
+          payDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+        } else {
+          payDate = new Date(payDateStr);
+        }
+        
+        const diffTime = payDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        return {
+          load: l,
+          producerName: prod?.name || 'Produtor Desconhecido',
+          value: l.financial!.finalValue || 0,
+          dateStr: l.financial!.scheduledPaymentDate,
+          daysLeft: diffDays
+        };
+      })
+      .sort((a, b) => a.daysLeft - b.daysLeft);
+  }, [companyLoads, companyProducers]);
+
   const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
   const fmtKg = (v: number) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(v);
 
@@ -101,6 +149,36 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-8">
+
+      {/* ALERTA FINANCEIRO (Vencimento até 3 dias) */}
+      {upcomingPayments.length > 0 && (
+        <div className="mb-2">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+              <AlertTriangle size={16} className="text-red-600" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-800 tracking-tight">Pagamentos Próximos ao Vencimento</h2>
+            <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{upcomingPayments.length} ALERTA{upcomingPayments.length > 1 ? 'S' : ''}</span>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {upcomingPayments.map((item, idx) => (
+              <div key={`alert-${item.load.id}-${idx}`} className={`bg-white border-l-4 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden ${item.daysLeft < 0 ? 'border-red-500' : item.daysLeft === 0 ? 'border-orange-500' : 'border-amber-400'}`}>
+                <div className="flex justify-between items-start mb-2">
+                  <p className="text-xs font-bold text-slate-500 truncate max-w-[70%]">{item.producerName}</p>
+                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                    item.daysLeft < 0 ? 'bg-red-50 text-red-600' : item.daysLeft === 0 ? 'bg-orange-50 text-orange-600' : 'bg-amber-50 text-amber-600'
+                  }`}>
+                    {item.daysLeft < 0 ? `Vencido há ${Math.abs(item.daysLeft)} d` : item.daysLeft === 0 ? 'Vence HOJE' : `Em ${item.daysLeft} d`}
+                  </span>
+                </div>
+                <h3 className="text-lg font-black text-slate-800">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.value)}</h3>
+                <Link to={`/${companySlug}/app/financeiro`} className="absolute inset-0 z-10" title="Ver no Módulo Financeiro"></Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ============================================================ */}
       {/* ROW 1: KPIs Principais (4 cards) */}
@@ -185,10 +263,10 @@ const AdminDashboard = () => {
       {/* ============================================================ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* Pipeline de Status */}
+        {/* Fluxo de Cargas */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
           <h3 className="text-base font-black text-slate-800 mb-5 flex items-center gap-2">
-            <Activity size={18} style={{ color: 'var(--primary-color)' }} /> Pipeline de Cargas
+            <Activity size={18} style={{ color: 'var(--primary-color)' }} /> Fluxo de Cargas
           </h3>
           <div className="space-y-3">
             {[

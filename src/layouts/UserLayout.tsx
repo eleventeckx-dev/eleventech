@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Truck, Factory, User, Leaf, LogOut } from 'lucide-react';
+import { Truck, Factory, User, Leaf, LogOut, Warehouse } from 'lucide-react';
 import { useAgro } from '../contexts/AgroContext';
 
 const UserLayout = () => {
@@ -19,6 +19,7 @@ const UserLayout = () => {
   const menu = [
     { name: 'Coleta', path: `/${companySlug}/user/coleta`, icon: Truck },
     { name: 'Benefic.', path: `/${companySlug}/user/beneficiamento`, icon: Factory },
+    { name: 'Estoque', path: `/${companySlug}/user/estoque`, icon: Warehouse },
     { name: 'Perfil', path: `/${companySlug}/user/perfil`, icon: User },
   ];
 
