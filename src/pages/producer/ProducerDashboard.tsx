@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAgro } from '../../contexts/AgroContext';
-import { Truck, DollarSign, CheckCircle2, Scale, PackageOpen, Calendar, ArrowRight, Receipt, FileText } from 'lucide-react';
+import { Truck, DollarSign, CheckCircle2, Scale, PackageOpen, Calendar, ArrowRight, Receipt, FileText, ExternalLink } from 'lucide-react';
 import { PremiumCard, EmptyState } from '../../components/shared/UserUIComponents';
 
 const ProducerDashboard = () => {
@@ -15,7 +15,12 @@ const ProducerDashboard = () => {
   const loadsToReceive = myLoads.filter(l => ['beneficiado', 'pagamento_programado'].includes(l.status));
   const loadsFinished = myLoads.filter(l => l.status === 'pago');
   
-  const amountToReceive = myLoads.filter(l => l.status === 'pagamento_programado').reduce((acc, l) => acc + (l.financial?.finalValue || 0), 0);
+  const amountToReceive = myLoads
+    .filter(l => l.status === 'pagamento_programado')
+    .reduce((acc, l) => acc + (l.financial?.finalValue || 0), 0);
+  
+  const totalWeightAproveitado = myLoads
+    .reduce((acc, l) => acc + (l.processing?.netWeight || 0), 0);
 
   const getStatusBadge = (status: string) => {
     switch(status) {
@@ -67,12 +72,12 @@ const ProducerDashboard = () => {
         <PremiumCard className="relative overflow-hidden group border border-brand-soft/50">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-brand-soft text-brand flex items-center justify-center shrink-0 border border-brand-soft">
-              <CheckCircle2 size={24} />
+              <Scale size={24} />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Finalizadas</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Peso Aproveitado</p>
               <p className="text-2xl font-black text-slate-800 leading-none mt-1.5">
-                {loadsFinished.length} <span className="text-sm font-bold text-slate-400">pagas</span>
+                {totalWeightAproveitado.toFixed(0)} <span className="text-sm font-bold text-slate-400">kg total</span>
               </p>
             </div>
           </div>
@@ -140,16 +145,17 @@ const ProducerDashboard = () => {
                         <span className="text-slate-500 font-medium">Peso Recebido (Pátio):</span>
                         <span className="font-bold text-slate-700">{load.collection.grossWeight} kg</span>
                       </div>
-                      {proc && (
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-slate-500 font-medium">Descartes / Danos / Diferença:</span>
-                          <span className="font-bold text-rose-500">-{Math.abs(proc.damage + proc.discard + proc.weightDifference).toFixed(2)} kg</span>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-500 font-medium">Peso Líquido (Aproveitado):</span>
+                        <span className="font-bold text-slate-700">{proc?.netWeight} kg</span>
+                      </div>
+                      
+                      {fin && (
+                        <div className="flex justify-between items-center text-sm bg-brand-soft/50 p-2 rounded-lg border border-brand-soft">
+                          <span className="text-brand font-black">Peso Faturado:</span>
+                          <span className="font-black text-brand">{fin.netWeight} kg</span>
                         </div>
                       )}
-                      <div className="flex justify-between items-center text-sm bg-slate-50 p-2 rounded-lg border border-slate-100">
-                        <span className="text-brand font-black">Peso Aproveitado:</span>
-                        <span className="font-black text-brand">{fin?.netWeight || (proc?.netWeight)} kg</span>
-                      </div>
                     </div>
 
                     <div className="space-y-3">
@@ -185,13 +191,27 @@ const ProducerDashboard = () => {
                   {/* Totalizador */}
                   <div className="bg-brand-soft/30 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center border border-brand-soft/50 border-dashed">
                      <span className="text-sm font-bold text-brand mb-1 sm:mb-0">Valor Final de Acerto</span>
-                     {fin ? (
-                       <span className="text-2xl font-black text-emerald-600">
-                         {fin.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                       </span>
-                     ) : (
-                       <span className="text-base font-black text-slate-400/80 italic tracking-tight">Em cálculo...</span>
-                     )}
+                     <div className="flex flex-col items-end">
+                       {fin ? (
+                         <>
+                           <span className="text-2xl font-black text-emerald-600 leading-none">
+                             {fin.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                           </span>
+                           {load.status === 'pago' && load.payment?.comprovanteUrl && (
+                             <a 
+                               href={load.payment.comprovanteUrl} 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-white px-2 py-1 rounded-lg border border-emerald-100 hover:bg-emerald-50 transition-colors"
+                             >
+                               <ExternalLink size={10} /> Ver Comprovante
+                             </a>
+                           )}
+                         </>
+                       ) : (
+                         <span className="text-base font-black text-slate-400/80 italic tracking-tight">Em cálculo...</span>
+                       )}
+                     </div>
                   </div>
 
                 </PremiumCard>

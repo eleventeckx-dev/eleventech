@@ -8,7 +8,7 @@ const AdminFinanceiro = () => {
   const { loads, producers, products, updateLoad, currentUser } = useAgro();
   
   const companyLoads = loads.filter(l => l.companyId === currentUser?.companyId);
-  const pendingLoads = companyLoads.filter(l => l.status === 'beneficiado' && ((l.processing?.productionWeight || 0) > 0 || (l.processing?.bulkSaleWeight || 0) > 0));
+  const pendingLoads = companyLoads.filter(l => l.status === 'beneficiado' && (l.processing?.netWeight || 0) > 0);
   const scheduledLoads = companyLoads.filter(l => l.status === 'pagamento_programado');
   
   const [selectedLoadId, setSelectedLoadId] = useState('');
@@ -23,13 +23,15 @@ const AdminFinanceiro = () => {
 
   const selectedLoad = pendingLoads.find(l => l.id === selectedLoadId);
   const selectedProduct = selectedLoad ? products.find(p => p.name.toLowerCase() === selectedLoad.collection.type.toLowerCase()) : null;
-
+  
   const prodWeight = selectedLoad?.processing?.productionWeight || 0;
   const bulkWeight = selectedLoad?.processing?.bulkSaleWeight || 0;
+  const stockWeight = selectedLoad?.processing?.stockWeight || 0;
+  const payableWeight = selectedLoad?.processing?.netWeight || 0;
   const price = Number(form.pricePerKg) || 0;
   
   const discounts = Number(form.discounts) || 0;
-  const grossValue = (prodWeight + bulkWeight) * price;
+  const grossValue = payableWeight * price;
   const finalValue = Math.max(0, grossValue - discounts);
 
   const totalPending = pendingLoads.reduce((acc, l) => acc + (l.processing?.netWeight || 0), 0);
@@ -53,9 +55,10 @@ const AdminFinanceiro = () => {
       status: 'pagamento_programado',
       financial: { 
         id: `fin_${Date.now()}`, 
-        netWeight: prodWeight + bulkWeight,
+        netWeight: payableWeight,
         productionWeight: prodWeight,
         bulkWeight: bulkWeight,
+        stockWeight: selectedLoad.processing?.stockWeight || 0,
         pricePerKg: price,
         discounts, 
         grossValue, 
@@ -175,7 +178,7 @@ const AdminFinanceiro = () => {
                     <th className="pb-3 text-sm font-semibold text-slate-500">Produtor</th>
                     <th className="pb-3 text-sm font-semibold text-slate-500">Produto</th>
                     <th className="pb-3 text-sm font-semibold text-slate-500">Destinação</th>
-                    <th className="pb-3 text-sm font-semibold text-slate-500">Peso Financeiro</th>
+                    <th className="pb-3 text-sm font-semibold text-slate-500">Peso Faturado</th>
                     <th className="pb-3 text-sm font-semibold text-slate-500 text-right">Ação</th>
                   </tr>
                 </thead>
@@ -220,7 +223,7 @@ const AdminFinanceiro = () => {
                             )}
                           </div>
                         </td>
-                        <td className="py-4 text-sm font-bold text-slate-800">{((load.processing?.productionWeight || 0) + (load.processing?.bulkSaleWeight || 0)).toFixed(0)} kg</td>
+                        <td className="py-4 text-sm font-bold text-slate-800">{(load.processing?.netWeight || 0).toFixed(0)} kg</td>
                         <td className="py-4 text-right">
                           <button 
                             onClick={() => setSelectedLoadId(load.id)}
@@ -258,9 +261,12 @@ const AdminFinanceiro = () => {
                       {(load.processing?.bulkSaleWeight || 0) > 0 && (
                         <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100">Granel: {load.processing?.bulkSaleWeight} kg</span>
                       )}
+                      {(load.processing?.stockWeight || 0) > 0 && (
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">Estoque: {load.processing?.stockWeight} kg</span>
+                      )}
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-black text-slate-800">{((load.processing?.productionWeight || 0) + (load.processing?.bulkSaleWeight || 0)).toFixed(0)} kg</span>
+                      <span className="text-sm font-black text-slate-800">{(load.processing?.netWeight || 0).toFixed(0)} kg</span>
                       <button 
                         onClick={() => setSelectedLoadId(load.id)}
                         className="btn-brand px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm"
@@ -350,26 +356,31 @@ const AdminFinanceiro = () => {
                   <span className="text-sm font-bold text-slate-600">{selectedLoad.collection.type}</span>
                 </div>
                 <div className="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-slate-100 font-black text-slate-800">
-                  {prodWeight + bulkWeight} kg
+                  {payableWeight} kg
                 </div>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex justify-around items-center">
-                <div className="text-center">
+                <div className="text-center shrink-0">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Produção</p>
-                  <p className="text-sm font-black text-emerald-600">{prodWeight} kg</p>
+                  <p className="text-sm font-black text-emerald-600 leading-none mt-1">{prodWeight} kg</p>
                 </div>
                 <div className="w-px h-8 bg-slate-200"></div>
-                <div className="text-center">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">A Granel</p>
-                  <p className="text-sm font-black text-blue-600">{bulkWeight} kg</p>
+                <div className="text-center shrink-0">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Granel</p>
+                  <p className="text-sm font-black text-blue-600 leading-none mt-1">{bulkWeight} kg</p>
                 </div>
                 <div className="w-px h-8 bg-slate-200"></div>
-                <div className="text-center">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Financeiro</p>
-                  <p className="text-sm font-black text-slate-800">{prodWeight + bulkWeight} kg</p>
+                <div className="text-center shrink-0">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Maturação</p>
+                  <p className="text-sm font-black text-amber-600 leading-none mt-1">{stockWeight} kg</p>
+                </div>
+                <div className="w-px h-8 bg-slate-200"></div>
+                <div className="text-center shrink-0">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Faturado</p>
+                  <p className="text-sm font-black text-slate-800 leading-none mt-1">{payableWeight} kg</p>
                 </div>
               </div>
 

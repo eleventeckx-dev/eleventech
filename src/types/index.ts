@@ -108,6 +108,7 @@ export type FinancialRecord = {
   netWeight: number;
   productionWeight?: number;
   bulkWeight?: number;
+  stockWeight?: number;
   pricePerKg: number; 
   discounts: number;
   grossValue: number; 

@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { UploadCloud, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { uploadImage } from '../lib/storage';
 
 interface ImageUploadProps {
   value?: string;
@@ -38,20 +39,13 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, isLoa
 
     try {
       setInternalLoading(true);
-      // Importante: Em produção isso chamaria import { mockUploadImage } from "@/lib/storage";
-      // Mas para manter as dependências unificadas, exportamos o leitor base64 aqui
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          onChange(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+      const url = await uploadImage(file);
+      onChange(url);
     } catch (err) {
       console.error('Falha no upload', err);
+      alert('Erro ao realizar upload da imagem. Verifique sua conexão.');
     } finally {
-      // Pequeno timeout visual
-      setTimeout(() => setInternalLoading(false), 800);
+      setInternalLoading(false);
     }
   };
 
