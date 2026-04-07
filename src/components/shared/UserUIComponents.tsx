@@ -61,6 +61,7 @@ export const FloatingLabelInput = ({ label, type = "text", value, onChange, icon
         value={value} 
         onChange={onChange} 
         required={required}
+        autoComplete="off"
         className={`w-full bg-brand-soft/30 hover:bg-brand-soft/50 border-[1.5px] border-brand-soft focus:border-brand ring-brand focus:ring-4 rounded-2xl outline-none transition-all font-bold placeholder:opacity-30 ${Icon ? 'pl-11' : 'pl-4'} pr-4 py-4`}
         {...props}
       />
