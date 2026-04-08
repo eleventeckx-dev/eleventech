@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAgro } from '../../contexts/AgroContext';
-import { Building2, Plus, CheckCircle2, XCircle, Edit2, Users2, Phone, MessageSquare, Clock, Filter, Link as LinkIcon, Copy, Check } from 'lucide-react';
+import { Building2, Plus, CheckCircle2, XCircle, Edit2, Users2, Phone, MessageSquare, Clock, Filter, Link as LinkIcon, Copy, Check, Trash2, RefreshCcw, AlertOctagon } from 'lucide-react';
 import { toast } from 'sonner';
 
 // ---- DASHBOARD SUPER ADMIN ----
@@ -46,11 +46,15 @@ export const SADashboard = () => {
 
 // ---- GESTÃO DE EMPRESAS ----
 export const SACompanies = () => {
-  const { companies, users, addCompany, updateCompany } = useAgro();
+  const { companies, users, addCompany, updateCompany, resetCompanyData, deleteCompanyFull } = useAgro();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', document: '', adminName: '', adminEmail: '', adminPassword: '' });
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+
+  const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean; action: 'reset' | 'delete' | null; companyId: string | null }>({ isOpen: false, action: null, companyId: null });
+  const [maestroPass, setMaestroPass] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const getCompanyLink = (slug: string) => {
     const base = window.location.origin;
@@ -116,6 +120,28 @@ export const SACompanies = () => {
   const toggleStatus = (id: string, currentStatus: string) => {
     updateCompany(id, { status: currentStatus === 'active' ? 'inactive' : 'active' });
     toast.info('Status da empresa atualizado.');
+  };
+
+  const handleCriticalAction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordModal.companyId || !passwordModal.action || !maestroPass) return;
+    
+    try {
+      setIsProcessing(true);
+      if (passwordModal.action === 'reset') {
+        await resetCompanyData(passwordModal.companyId, maestroPass);
+        toast.success("Dados da empresa apagados com sucesso. A empresa continua existindo como uma folha em branco.");
+      } else {
+        await deleteCompanyFull(passwordModal.companyId, maestroPass);
+        toast.success("Empresa totalmente excluída, incluindo todos os seus usuários.");
+      }
+      setPasswordModal({ isOpen: false, action: null, companyId: null });
+      setMaestroPass('');
+    } catch(err: any) {
+      toast.error(err.message || 'Falha ao executar ação crítica.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -198,6 +224,21 @@ export const SACompanies = () => {
                       }`}
                     >
                       {company.status === 'active' ? 'Desativar' : 'Ativar'}
+                    </button>
+                    
+                    <button
+                      onClick={() => setPasswordModal({ isOpen: true, action: 'reset', companyId: company.id })}
+                      className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition ml-2"
+                      title="Resetar Banco de Dados da Empresa"
+                    >
+                      <RefreshCcw size={16} />
+                    </button>
+                    <button
+                      onClick={() => setPasswordModal({ isOpen: true, action: 'delete', companyId: company.id })}
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                      title="Excluir Empresa Definitivamente"
+                    >
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </td>
@@ -282,6 +323,62 @@ export const SACompanies = () => {
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition">Cancelar</button>
                 <button type="submit" className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/30">
                   {editingId ? 'Salvar Alterações' : 'Cadastrar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Validação de Senha do Maestro para Ações Críticas */}
+      {passwordModal.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-center relative overflow-hidden">
+            <div className={`absolute top-0 left-0 w-full h-1 ${passwordModal.action === 'delete' ? 'bg-red-500' : 'bg-amber-500'}`} />
+            
+            <div className={`mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-4 ${passwordModal.action === 'delete' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
+              <AlertOctagon size={28} />
+            </div>
+            
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Ação Irreversível</h3>
+            <p className="text-sm text-slate-500 mb-6 px-2">
+              {passwordModal.action === 'delete' 
+                ? 'Isso excluirá permanentemente a empresa e TODOS os usuários vinculados.' 
+                : 'Isso apagará todas as cargas, produtores e produtos inseridos (reset completo), mas manterá a empresa e as configurações.'}
+            </p>
+            
+            <form onSubmit={handleCriticalAction}>
+              <div className="text-left mb-6">
+                <label className="text-sm font-black text-slate-700 block mb-1 uppercase tracking-wider">Senha do Super Admin</label>
+                <input 
+                  required 
+                  type="password" 
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-red-500 outline-none text-center tracking-[0.2em]" 
+                  value={maestroPass} 
+                  onChange={e => setMaestroPass(e.target.value)} 
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button 
+                  type="button" 
+                  onClick={() => { setPasswordModal({ isOpen: false, action: null, companyId: null }); setMaestroPass(''); }} 
+                  className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition"
+                  disabled={isProcessing}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className={`flex-1 px-4 py-3 text-white rounded-xl font-bold transition shadow-lg flex justify-center items-center gap-2 ${
+                    passwordModal.action === 'delete' 
+                      ? 'bg-red-600 hover:bg-red-700 shadow-red-500/30' 
+                      : 'bg-amber-600 hover:bg-amber-700 shadow-amber-500/30'
+                  }`}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? 'Processando...' : 'Confirmar'}
                 </button>
               </div>
             </form>

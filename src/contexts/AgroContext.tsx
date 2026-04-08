@@ -20,6 +20,8 @@ interface AgroContextData {
   deleteProducer: (id: string) => Promise<void>;
   addCompany: (company: Company, adminName?: string, adminEmail?: string, adminPassword?: string) => Promise<void>;
   updateCompany: (id: string, company: Partial<Company>, adminName?: string, adminEmail?: string, adminPassword?: string) => Promise<void>;
+  resetCompanyData: (companyId: string, maestroPassword: string) => Promise<void>;
+  deleteCompanyFull: (companyId: string, maestroPassword: string) => Promise<void>;
   addUser: (user: User, password?: string) => Promise<void>;
   updateUser: (id: string, user: Partial<User>, newPassword?: string) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
@@ -608,50 +610,47 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // ================================================================
   // MUTATIONS: Empresas
   // ================================================================
-  // Função auxiliar: Cria admin via signup nativo do Supabase
+  // Função auxiliar: Cria admin via edge function para garantir unicidade e integridade
   const createAdminUser = async (companyId: string, adminName: string, adminEmail: string, adminPassword: string) => {
-    // Salvar sessão atual do maestro
-    const { data: { session: currentSession } } = await supabase.auth.getSession();
-    
-    console.log("[COMPANY] Criando admin via signup:", adminEmail);
-    
-    const { data: signupData, error: signupError } = await supabase.auth.signUp({
-      email: adminEmail,
-      password: adminPassword,
-      options: {
-        data: {
-          name: adminName,
-          role: 'admin',
-          companyId: companyId,
-        }
+    console.log("[COMPANY] Criando gestor inicial:", adminEmail);
+    const { data: edgeData, error: edgeError } = await supabase.functions.invoke('manage-company-admin', {
+      body: {
+        action: 'create',
+        companyId,
+        adminName,
+        adminEmail,
+        adminPassword
       }
     });
 
-    if (signupError) {
-      throw new Error(`Falha ao criar gestor: ${signupError.message}`);
+    if (edgeError) {
+      let msg = edgeError.message;
+      try {
+        const body = await edgeError.context.json();
+        if (body?.error) msg = body.error;
+      } catch(e) {}
+      
+      if (msg.includes('already registered')) {
+        throw new Error("Este e-mail já está em uso na plataforma.");
+      }
+      
+      throw new Error(`Falha ao criar gestor: ${msg}`);
     }
-
-    if (!signupData.user) {
-      throw new Error('Falha ao criar gestor: usuário não retornado');
-    }
-
-    console.log("[COMPANY] Admin criado:", signupData.user.id, signupData.user.email);
-
-    // Restaurar sessão do maestro (signup troca a sessão)
-    if (currentSession) {
-      await supabase.auth.setSession({
-        access_token: currentSession.access_token,
-        refresh_token: currentSession.refresh_token,
-      });
-      console.log("[COMPANY] Sessão do maestro restaurada");
-    }
-
-    return signupData.user;
   };
 
   const addCompany = async (company: Company, adminName?: string, adminEmail?: string, adminPassword?: string) => {
     try {
       setIsLoading(true);
+
+      const { data: duplicate } = await supabase
+        .from('companies')
+        .select('id')
+        .ilike('name', company.name)
+        .maybeSingle();
+      
+      if (duplicate) {
+        throw new Error(`Já existe uma empresa cadastrada com o nome "${company.name}". Escolha outro.`);
+      }
 
       const { error: companyError } = await supabase.from('companies').insert({
         id: company.id,
@@ -679,6 +678,19 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateCompany = async (id: string, updates: Partial<Company>, adminName?: string, adminEmail?: string, adminPassword?: string) => {
     try {
+      if (updates.name) {
+        const { data: duplicate } = await supabase
+          .from('companies')
+          .select('id')
+          .ilike('name', updates.name)
+          .neq('id', id)
+          .maybeSingle();
+
+        if (duplicate) {
+          throw new Error(`Já existe uma empresa cadastrada com o nome "${updates.name}".`);
+        }
+      }
+
       const dbUpdates: any = { 
         updated_at: new Date().toISOString() 
       };
@@ -734,6 +746,44 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error("[COMPANY] Erro detalhado ao editar empresa:", error);
       throw error;
+    }
+  };
+
+  const resetCompanyData = async (companyId: string, maestroPassword: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-company-admin', {
+        body: { action: 'reset_company', companyId, maestroPassword }
+      });
+      if (error) {
+         let msg = error.message;
+         try { const bd = await error.context.json(); if (bd?.error) msg = bd.error; } catch(e){}
+         throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
+      
+      await refreshData();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteCompanyFull = async (companyId: string, maestroPassword: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-company-admin', {
+        body: { action: 'delete_company', companyId, maestroPassword }
+      });
+      if (error) {
+         let msg = error.message;
+         try { const bd = await error.context.json(); if (bd?.error) msg = bd.error; } catch(e){}
+         throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
+      
+      await refreshData();
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -862,7 +912,7 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AgroContext.Provider value={{ 
       currentUser, setCurrentUser, logout, loads, producers, companies, users, products, isLoading,
-      addLoad, updateLoad, addProducer, updateProducer, deleteProducer, addCompany, updateCompany,
+      addLoad, updateLoad, addProducer, updateProducer, deleteProducer, addCompany, updateCompany, resetCompanyData, deleteCompanyFull,
       addUser, updateUser, deleteUser, addProduct, updateProduct, deleteProduct, updateLeadStatus, refreshData,
       brandingSlug, setBrandingSlug, leads
     }}>
