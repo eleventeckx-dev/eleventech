@@ -394,12 +394,12 @@ const AdminUsuarios = () => {
                 
                 <div className="space-y-1.5 md:col-span-2">
                   <label className="text-sm font-semibold text-slate-700">E-mail de Acesso</label>
-                  <input required type="email" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="joao@empresa.com" />
+                  <input required type="email" autoComplete="new-password" data-lpignore="true" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="joao@empresa.com" />
                 </div>
 
                 <div className="space-y-1.5 md:col-span-2">
                   <label className="text-sm font-semibold text-slate-700">Senha de Acesso {editingId && <span className="text-slate-400 font-normal ml-1">(opcional)</span>}</label>
-                  <input required={!editingId} type="text" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder={editingId ? "Deixe vazio para manter a mesma" : "Mínimo 6 caracteres"} />
+                  <input required={!editingId} type="password" autoComplete="new-password" data-lpignore="true" className="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder={editingId ? "Deixe vazio para manter a mesma" : "Mínimo 6 caracteres"} />
                 </div>
 
                 <div className="space-y-1.5 md:col-span-2">

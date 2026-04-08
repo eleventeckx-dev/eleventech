@@ -71,6 +71,10 @@ serve(async (req) => {
           name: userData.name,
           role: userData.role || 'collaborator',
           companyId: targetCompany
+        },
+        app_metadata: {
+          role: userData.role || 'collaborator',
+          companyId: targetCompany
         }
       })
 

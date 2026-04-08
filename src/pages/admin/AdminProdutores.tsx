@@ -247,11 +247,11 @@ const AdminProdutores = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold text-slate-700">E-mail de Login</label>
-                    <input type="email" className="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="produtor@email.com" />
+                    <input type="email" autoComplete="new-password" data-lpignore="true" className="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="produtor@email.com" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold text-slate-700">Senha de Acesso</label>
-                    <input type="password" className="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder="Defina uma senha" />
+                    <input type="password" autoComplete="new-password" data-lpignore="true" className="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder="Defina uma senha" />
                   </div>
                 </div>
               </div>
