@@ -211,6 +211,11 @@ const AdminOperacao = () => {
                       </div>
                       <h4 className="font-black text-slate-800 text-[17px] leading-tight truncate" title={producer?.name}>{producer?.name}</h4>
                       <p className="text-xs font-bold text-slate-500 truncate mt-0.5">{load.collection.type}</p>
+                      {(load.collection.producerUnitName || load.collection.location) && (
+                        <p className="text-[11px] font-bold text-slate-400 truncate mt-0.5 flex items-center gap-1">
+                          <MapPin size={10} /> {load.collection.producerUnitName || load.collection.location}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -308,7 +313,7 @@ const AdminOperacao = () => {
                   <div className="flex-1">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Produtor</p>
                     <h4 className="text-lg font-black text-slate-800">{selectedProducer?.name}</h4>
-                    <p className="text-xs text-slate-500 font-medium">{selectedProducer?.property}</p>
+                    <p className="text-xs text-slate-500 font-medium">{selectedLoad.collection.producerUnitName || selectedLoad.collection.location || selectedProducer?.property}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3 pt-3 border-t border-slate-200">
@@ -403,7 +408,7 @@ const AdminOperacao = () => {
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <MapPin size={12} /> {selectedLoad.collection.location}
+                  <MapPin size={12} /> {selectedLoad.collection.producerUnitName || selectedLoad.collection.location}
                 </div>
                 {selectedResponsible && (
                   <div className="flex items-center gap-2 text-xs text-slate-500">

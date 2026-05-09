@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "test:unit-performance": "node src/pages/admin/adminDashboardMetrics.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

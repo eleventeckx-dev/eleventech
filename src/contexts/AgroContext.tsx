@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Load, Producer, User, Company, Product, Lead } from '../types';
+import { Load, Producer, ProducerUnit, User, Company, Product, Lead } from '../types';
 import { supabase } from '../lib/supabase';
+
+type ProducerUnitInput = Pick<ProducerUnit, 'name'> & Partial<Pick<ProducerUnit, 'location' | 'description'>>;
 
 interface AgroContextData {
   currentUser: User | null;
@@ -8,6 +10,7 @@ interface AgroContextData {
   logout: () => Promise<void>;
   loads: Load[];
   producers: Producer[];
+  producerUnits: ProducerUnit[];
   companies: Company[];
   users: User[];
   products: Product[];
@@ -15,9 +18,12 @@ interface AgroContextData {
   isLoading: boolean;
   addLoad: (load: Load) => Promise<void>;
   updateLoad: (id: string, load: Partial<Load>) => Promise<void>;
-  addProducer: (producer: Producer) => Promise<void>;
+  addProducer: (producer: Producer, initialUnits?: ProducerUnitInput[]) => Promise<void>;
   updateProducer: (id: string, producer: Partial<Producer>) => Promise<void>;
   deleteProducer: (id: string) => Promise<void>;
+  addProducerUnit: (unit: ProducerUnit) => Promise<void>;
+  updateProducerUnit: (id: string, unit: Partial<ProducerUnit>) => Promise<void>;
+  deactivateProducerUnit: (id: string) => Promise<void>;
   addCompany: (company: Company, adminName?: string, adminEmail?: string, adminPassword?: string) => Promise<void>;
   updateCompany: (id: string, company: Partial<Company>, adminName?: string, adminEmail?: string, adminPassword?: string) => Promise<void>;
   resetCompanyData: (companyId: string, maestroPassword: string) => Promise<void>;
@@ -40,6 +46,7 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loads, setLoads] = useState<Load[]>([]);
   const [producers, setProducers] = useState<Producer[]>([]);
+  const [producerUnits, setProducerUnits] = useState<ProducerUnit[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -333,6 +340,27 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }));
       setProducers(mappedProducers);
 
+      // --- UNIDADES / ROÇAS DOS PRODUTORES ---
+      let producerUnitsQuery = supabase.from('producer_units').select('*');
+      if (!isMaestro && safeCompanyId) {
+        producerUnitsQuery = producerUnitsQuery.eq('company_id', safeCompanyId);
+      }
+      const { data: producerUnitsData, error: puError } = await producerUnitsQuery.order('name', { ascending: true });
+      if (puError) console.error("[DATA] Erro em producer_units:", puError.message);
+
+      const mappedProducerUnits: ProducerUnit[] = (producerUnitsData || []).map(u => ({
+        id: u.id,
+        companyId: u.company_id,
+        producerId: u.producer_id,
+        name: u.name,
+        description: u.description || '',
+        location: u.location || '',
+        isActive: u.is_active,
+        createdAt: u.created_at,
+        updatedAt: u.updated_at
+      }));
+      setProducerUnits(mappedProducerUnits);
+
       // --- PRODUTOS ---
       let productsQuery = supabase.from('products').select('*');
       if (!isMaestro && safeCompanyId) {
@@ -469,7 +497,7 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // ================================================================
   // MUTATIONS: Produtores
   // ================================================================
-  const addProducer = async (producer: Producer) => {
+  const addProducer = async (producer: Producer, initialUnits: ProducerUnitInput[] = []) => {
     setIsLoading(true);
     try {
       let finalUserId = producer.id;
@@ -520,6 +548,47 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
         created_at: new Date().toISOString()
       });
       if (error) throw error;
+
+      const unitsByName = new Map<string, ProducerUnitInput>();
+      const addInitialUnit = (unit: ProducerUnitInput) => {
+        const name = unit.name?.trim();
+        if (!name) return;
+
+        const key = name.toLowerCase();
+        if (unitsByName.has(key)) return;
+
+        unitsByName.set(key, {
+          name,
+          location: unit.location?.trim() || '',
+          description: unit.description?.trim() || ''
+        });
+      };
+
+      initialUnits.forEach(addInitialUnit);
+
+      const initialUnitName = producer.property?.trim();
+      if (initialUnitName) {
+        addInitialUnit({
+          name: initialUnitName,
+          location: initialUnitName,
+          description: ''
+        });
+      }
+
+      const unitsToInsert = Array.from(unitsByName.values()).map(unit => ({
+        company_id: producer.companyId,
+        producer_id: finalUserId,
+        name: unit.name,
+        description: unit.description || null,
+        location: unit.location || null,
+        is_active: true,
+        created_at: new Date().toISOString()
+      }));
+
+      if (unitsToInsert.length > 0) {
+        const { error: unitError } = await supabase.from('producer_units').insert(unitsToInsert);
+        if (unitError && unitError.code !== '23505') throw unitError;
+      }
       
       await refreshData();
     } catch (err: any) {
@@ -572,6 +641,40 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase.from('producers').delete().eq('id', id);
     if (error) throw error;
     await refreshData();
+  };
+
+  // ================================================================
+  // MUTATIONS: Unidades / Roças
+  // ================================================================
+  const addProducerUnit = async (unit: ProducerUnit) => {
+    const { error } = await supabase.from('producer_units').insert({
+      id: unit.id,
+      company_id: unit.companyId,
+      producer_id: unit.producerId,
+      name: unit.name,
+      description: unit.description || null,
+      location: unit.location || null,
+      is_active: unit.isActive,
+      created_at: new Date().toISOString()
+    });
+    if (error) throw error;
+    await refreshData();
+  };
+
+  const updateProducerUnit = async (id: string, updates: Partial<ProducerUnit>) => {
+    const dbUpdate: any = { updated_at: new Date().toISOString() };
+    if (updates.name !== undefined) dbUpdate.name = updates.name;
+    if (updates.description !== undefined) dbUpdate.description = updates.description || null;
+    if (updates.location !== undefined) dbUpdate.location = updates.location || null;
+    if (updates.isActive !== undefined) dbUpdate.is_active = updates.isActive;
+
+    const { error } = await supabase.from('producer_units').update(dbUpdate).eq('id', id);
+    if (error) throw error;
+    await refreshData();
+  };
+
+  const deactivateProducerUnit = async (id: string) => {
+    await updateProducerUnit(id, { isActive: false });
   };
 
   // ================================================================
@@ -911,8 +1014,9 @@ export const AgroProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AgroContext.Provider value={{ 
-      currentUser, setCurrentUser, logout, loads, producers, companies, users, products, isLoading,
+      currentUser, setCurrentUser, logout, loads, producers, producerUnits, companies, users, products, isLoading,
       addLoad, updateLoad, addProducer, updateProducer, deleteProducer, addCompany, updateCompany, resetCompanyData, deleteCompanyFull,
+      addProducerUnit, updateProducerUnit, deactivateProducerUnit,
       addUser, updateUser, deleteUser, addProduct, updateProduct, deleteProduct, updateLeadStatus, refreshData,
       brandingSlug, setBrandingSlug, leads
     }}>

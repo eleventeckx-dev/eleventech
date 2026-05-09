@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAgro } from '../../contexts/AgroContext';
-import { Receipt, Package, DollarSign, X, Scale, CheckCircle2, Search, Calendar, Camera } from 'lucide-react';
+import { Receipt, Package, DollarSign, X, Scale, CheckCircle2, Search, Calendar, Camera, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { ImageUpload } from '../../components/ImageUpload';
 
@@ -207,7 +207,14 @@ const AdminFinanceiro = () => {
                                 <div className="w-full h-full flex items-center justify-center"><Package size={12} className="text-slate-300" /></div>
                               )}
                             </div>
-                            <span className="text-sm text-slate-600">{load.collection.type}</span>
+                            <div>
+                              <span className="text-sm text-slate-600">{load.collection.type}</span>
+                              {(load.collection.producerUnitName || load.collection.location) && (
+                                <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mt-0.5">
+                                  <MapPin size={10} /> {load.collection.producerUnitName || load.collection.location}
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td className="py-4">
@@ -252,6 +259,11 @@ const AdminFinanceiro = () => {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-slate-800 truncate">{prod?.name}</p>
                         <p className="text-xs text-slate-500">{load.collection.type} • #{load.id.slice(-6)}</p>
+                        {(load.collection.producerUnitName || load.collection.location) && (
+                          <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mt-0.5">
+                            <MapPin size={10} /> {load.collection.producerUnitName || load.collection.location}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-1.5 mb-3">
@@ -299,6 +311,11 @@ const AdminFinanceiro = () => {
                       <div>
                         <p className="text-sm font-bold text-slate-800">{prod?.name}</p>
                         <p className="text-xs text-slate-500">{load.collection.type} • {load.processing?.netWeight} kg</p>
+                        {(load.collection.producerUnitName || load.collection.location) && (
+                          <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mt-0.5">
+                            <MapPin size={10} /> {load.collection.producerUnitName || load.collection.location}
+                          </p>
+                        )}
                       </div>
                       <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">
                         {load.financial?.scheduledPaymentDate ? new Date(load.financial.scheduledPaymentDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}
@@ -341,6 +358,11 @@ const AdminFinanceiro = () => {
             <div className="bg-slate-50 rounded-2xl p-5 mb-8 border border-slate-100">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Carga Beneficiada</p>
               <h4 className="font-black text-xl text-slate-800 mb-4">{producers.find(p => p.id === selectedLoad.producerId)?.name}</h4>
+              {(selectedLoad.collection.producerUnitName || selectedLoad.collection.location) && (
+                <p className="text-xs font-bold text-slate-500 mb-4 flex items-center gap-1.5">
+                  <MapPin size={12} /> {selectedLoad.collection.producerUnitName || selectedLoad.collection.location}
+                </p>
+              )}
               
               <div className="flex justify-between items-center pt-4 border-t border-slate-200">
                 <div className="flex items-center gap-2.5">

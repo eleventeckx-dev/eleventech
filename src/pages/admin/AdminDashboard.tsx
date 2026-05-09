@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAgro } from '../../contexts/AgroContext';
 import { 
@@ -7,14 +7,26 @@ import {
   Scale, BarChart3, ArrowUpRight, ArrowDownRight, 
   Leaf, Factory, CheckCircle2, Clock
 } from 'lucide-react';
+import { aggregateUnitPerformance } from './adminDashboardMetrics';
 
 const AdminDashboard = () => {
-  const { loads, producers, products, currentUser } = useAgro();
+  const { loads, producers, producerUnits, currentUser } = useAgro();
   const { companySlug } = useParams<{ companySlug: string }>();
+  const [unitProducerFilter, setUnitProducerFilter] = useState('all');
+  const [unitFilter, setUnitFilter] = useState('all');
 
   // Filtrar dados pela empresa do admin logado
-  const companyLoads = useMemo(() => loads.filter(l => l.companyId === currentUser?.companyId), [loads, currentUser]);
-  const companyProducers = useMemo(() => producers.filter(p => p.companyId === currentUser?.companyId), [producers, currentUser]);
+  const companyLoads = useMemo(() => loads.filter(l => l.companyId === currentUser?.companyId), [loads, currentUser?.companyId]);
+  const companyProducers = useMemo(() => producers.filter(p => p.companyId === currentUser?.companyId), [producers, currentUser?.companyId]);
+  const companyProducerUnits = useMemo(() => producerUnits.filter(u => u.companyId === currentUser?.companyId), [producerUnits, currentUser?.companyId]);
+
+  const producerById = useMemo(() => {
+    return new Map(companyProducers.map(producer => [producer.id, producer]));
+  }, [companyProducers]);
+
+  const unitById = useMemo(() => {
+    return new Map(companyProducerUnits.map(unit => [unit.id, unit]));
+  }, [companyProducerUnits]);
 
   // ================================================================
   // CÁLCULOS DE INSIGHTS
@@ -68,7 +80,7 @@ const AdminDashboard = () => {
     // Ranking de produtores (top 5 por volume)
     const producerVolumes: Record<string, { name: string; weight: number; loads: number }> = {};
     companyLoads.forEach(l => {
-      const prod = companyProducers.find(p => p.id === l.producerId);
+      const prod = producerById.get(l.producerId);
       if (!prod) return;
       if (!producerVolumes[prod.id]) {
         producerVolumes[prod.id] = { name: prod.name, weight: 0, loads: 0 };
@@ -87,7 +99,41 @@ const AdminDashboard = () => {
       pipeline, topProducts, maxProductVolume, topProducers,
       processedCount: processedLoads.length,
     };
-  }, [companyLoads, companyProducers]);
+  }, [companyLoads, producerById]);
+
+  // Desempenho por unidade / roça
+  const unitPerformance = useMemo(() => {
+    return aggregateUnitPerformance(companyLoads, producerById, unitById);
+  }, [companyLoads, producerById, unitById]);
+
+  const unitFilterOptions = useMemo(() => {
+    return unitPerformance
+      .filter(row => unitProducerFilter === 'all' || row.producerId === unitProducerFilter)
+      .sort((a, b) => a.unitName.localeCompare(b.unitName));
+  }, [unitPerformance, unitProducerFilter]);
+
+  const filteredUnitPerformance = useMemo(() => {
+    return unitPerformance.filter(row => {
+      const matchesProducer = unitProducerFilter === 'all' || row.producerId === unitProducerFilter;
+      const matchesUnit = unitFilter === 'all' || row.key === unitFilter;
+      return matchesProducer && matchesUnit;
+    });
+  }, [unitPerformance, unitProducerFilter, unitFilter]);
+
+  const unitPerformanceHighlights = useMemo(() => {
+    const byVolume = [...filteredUnitPerformance].sort((a, b) => b.grossWeight - a.grossWeight)[0];
+    const byLoss = [...filteredUnitPerformance]
+      .filter(row => row.receivedWeight > 0)
+      .sort((a, b) => b.lossPercentage - a.lossPercentage)[0];
+    const byFinancial = [...filteredUnitPerformance].sort((a, b) => b.financialValue - a.financialValue)[0];
+    const legacyLoadCount = filteredUnitPerformance
+      .filter(row => row.isLegacy)
+      .reduce((acc, row) => acc + row.loadCount, 0);
+
+    return { byVolume, byLoss, byFinancial, legacyLoadCount };
+  }, [filteredUnitPerformance]);
+
+  const unitFiltersActive = unitProducerFilter !== 'all' || unitFilter !== 'all';
 
   // Pagamentos a Vencer em até 3 dias (ou vencidos)
   const upcomingPayments = useMemo(() => {
@@ -112,7 +158,7 @@ const AdminDashboard = () => {
         return payDate <= maxDate;
       })
       .map(l => {
-        const prod = companyProducers.find(p => p.id === l.producerId);
+        const prod = producerById.get(l.producerId);
         
         const payDateStr = l.financial!.scheduledPaymentDate;
         let payDate: Date;
@@ -129,13 +175,14 @@ const AdminDashboard = () => {
         return {
           load: l,
           producerName: prod?.name || 'Produtor Desconhecido',
+          unitName: l.collection.producerUnitName || l.collection.location || '',
           value: l.financial!.finalValue || 0,
           dateStr: l.financial!.scheduledPaymentDate,
           daysLeft: diffDays
         };
       })
       .sort((a, b) => a.daysLeft - b.daysLeft);
-  }, [companyLoads, companyProducers]);
+  }, [companyLoads, producerById]);
 
   const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
   const fmtKg = (v: number) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(v);
@@ -173,6 +220,7 @@ const AdminDashboard = () => {
                   </span>
                 </div>
                 <h3 className="text-lg font-black text-slate-800">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.value)}</h3>
+                {item.unitName && <p className="text-[10px] font-bold text-slate-400 truncate mt-1">{item.unitName}</p>}
                 <Link to={`/${companySlug}/app/financeiro`} className="absolute inset-0 z-10" title="Ver no Módulo Financeiro"></Link>
               </div>
             ))}
@@ -349,7 +397,162 @@ const AdminDashboard = () => {
       </div>
 
       {/* ============================================================ */}
-      {/* ROW 3: Ranking de Produtores + Atalhos Rápidos */}
+      {/* ROW 3: Desempenho por Unidade */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-5">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-base font-black text-slate-800 flex items-center gap-2">
+                <BarChart3 size={18} style={{ color: 'var(--primary-color)' }} /> Desempenho por Unidade
+              </h3>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 border border-slate-200 rounded-full px-2 py-1">
+                Filtros apenas nesta seção
+              </span>
+              {unitFiltersActive && (
+                <span className="text-[10px] font-black uppercase tracking-widest text-brand bg-brand-soft rounded-full px-2 py-1">
+                  Filtro ativo
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-1">
+              Unidades inativas permanecem no histórico; cargas antigas entram pelo fallback legado por produtor.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-[minmax(160px,1fr)_minmax(180px,1fr)_auto] gap-2 w-full lg:w-auto">
+            <select
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-brand/20"
+              value={unitProducerFilter}
+              onChange={event => {
+                setUnitProducerFilter(event.target.value);
+                setUnitFilter('all');
+              }}
+              aria-label="Filtrar por produtor"
+            >
+              <option value="all">Todos os produtores</option>
+              {companyProducers.map(producer => (
+                <option key={producer.id} value={producer.id}>{producer.name}</option>
+              ))}
+            </select>
+
+            <select
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-brand/20"
+              value={unitFilter}
+              onChange={event => setUnitFilter(event.target.value)}
+              aria-label="Filtrar por unidade"
+            >
+              <option value="all">Todas as unidades</option>
+              {unitFilterOptions.map(row => (
+                <option key={row.key} value={row.key}>
+                  {row.unitName}{row.isLegacy ? ' (legado)' : row.isInactive ? ' (inativa)' : ''}
+                </option>
+              ))}
+            </select>
+
+            {unitFiltersActive && (
+              <button
+                type="button"
+                onClick={() => {
+                  setUnitProducerFilter('all');
+                  setUnitFilter('all');
+                }}
+                className="rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-black text-slate-500 hover:text-slate-800 hover:border-slate-300 transition"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-5">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Maior volume</p>
+            <h4 className="text-lg font-black text-slate-800">{fmtKg(unitPerformanceHighlights.byVolume?.grossWeight || 0)} kg</h4>
+            <p className="text-[11px] font-bold text-slate-500 truncate mt-1">{unitPerformanceHighlights.byVolume?.unitName || 'Sem dados'}</p>
+          </div>
+
+          <div className="rounded-xl border border-red-100 bg-red-50/60 p-4">
+            <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">Maior quebra</p>
+            <h4 className="text-lg font-black text-red-600">{(unitPerformanceHighlights.byLoss?.lossPercentage || 0).toFixed(1)}%</h4>
+            <p className="text-[11px] font-bold text-red-500/80 truncate mt-1">{unitPerformanceHighlights.byLoss?.unitName || 'Sem dados'}</p>
+          </div>
+
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-4">
+            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Maior valor financeiro</p>
+            <h4 className="text-lg font-black text-emerald-700">{fmt(unitPerformanceHighlights.byFinancial?.financialValue || 0)}</h4>
+            <p className="text-[11px] font-bold text-emerald-600/80 truncate mt-1">{unitPerformanceHighlights.byFinancial?.unitName || 'Sem dados'}</p>
+          </div>
+
+          <div className="rounded-xl border border-amber-100 bg-amber-50/80 p-4">
+            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Sem unidade vinculada</p>
+            <h4 className="text-lg font-black text-amber-700">{unitPerformanceHighlights.legacyLoadCount}</h4>
+            <p className="text-[11px] font-bold text-amber-600/80 truncate mt-1">cargas no fallback legado</p>
+          </div>
+        </div>
+
+        {filteredUnitPerformance.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-slate-400 border border-dashed border-slate-200 rounded-xl bg-slate-50/60">
+            <BarChart3 size={30} className="mb-2 opacity-50" />
+            <p className="text-sm font-bold">Nenhuma unidade encontrada para os filtros.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  <th className="pb-3 text-[10px] font-black text-slate-400 uppercase tracking-widest min-w-[190px]">Unidade</th>
+                  <th className="pb-3 text-[10px] font-black text-slate-400 uppercase tracking-widest min-w-[150px]">Produtor</th>
+                  <th className="pb-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Cargas</th>
+                  <th className="pb-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Volume bruto</th>
+                  <th className="pb-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Peso líquido</th>
+                  <th className="pb-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Quebra %</th>
+                  <th className="pb-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Valor financeiro</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {filteredUnitPerformance.map(row => (
+                  <tr key={row.key} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-3.5 pr-4">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-sm font-black text-slate-800 truncate">{row.unitName}</span>
+                        {row.isInactive && <span className="shrink-0 text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 rounded px-1.5 py-0.5">Inativa</span>}
+                        {row.isLegacy && <span className="shrink-0 text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-700 rounded px-1.5 py-0.5">Legado</span>}
+                        {row.isSnapshot && <span className="shrink-0 text-[9px] font-black uppercase tracking-wider bg-blue-50 text-blue-600 rounded px-1.5 py-0.5">Snapshot</span>}
+                      </div>
+                    </td>
+                    <td className="py-3.5 pr-4">
+                      <span className="text-sm font-bold text-slate-600 truncate block">{row.producerName}</span>
+                    </td>
+                    <td className="py-3.5 text-right">
+                      <span className="text-sm font-black text-slate-700">{row.loadCount}</span>
+                    </td>
+                    <td className="py-3.5 text-right">
+                      <span className="text-sm font-black text-slate-700">{fmtKg(row.grossWeight)} kg</span>
+                    </td>
+                    <td className="py-3.5 text-right">
+                      <span className="text-sm font-bold text-slate-600">{fmtKg(row.netWeight)} kg</span>
+                    </td>
+                    <td className="py-3.5 text-right">
+                      <span className={`text-xs font-black px-2 py-1 rounded-lg ${row.lossPercentage > 10 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
+                        {row.lossPercentage.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td className="py-3.5 text-right">
+                      <span className="text-sm font-black text-slate-700 block">{fmt(row.financialValue)}</span>
+                      <span className="text-[10px] font-bold text-slate-400">
+                        R$ {row.avgPricePerKg.toFixed(2)}/kg{row.pendingPayment > 0 ? ` - a pagar ${fmt(row.pendingPayment)}` : ''}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ============================================================ */}
+      {/* ROW 4: Ranking de Produtores + Atalhos Rápidos */}
       {/* ============================================================ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 

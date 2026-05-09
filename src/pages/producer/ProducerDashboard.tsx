@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAgro } from '../../contexts/AgroContext';
-import { Truck, DollarSign, CheckCircle2, Scale, PackageOpen, Calendar, ArrowRight, Receipt, FileText, ExternalLink } from 'lucide-react';
+import { DollarSign, Scale, PackageOpen, Calendar, Receipt, FileText, ExternalLink, MapPin } from 'lucide-react';
 import { PremiumCard, EmptyState } from '../../components/shared/UserUIComponents';
 
 const ProducerDashboard = () => {
@@ -126,6 +126,11 @@ const ProducerDashboard = () => {
                         <p className="text-xs font-bold text-slate-500 mt-1 flex items-center gap-1.5">
                           <Calendar size={12}/> Entrada: {new Date(load.createdAt).toLocaleDateString('pt-BR')}
                         </p>
+                        {(load.collection.producerUnitName || load.collection.location) && (
+                          <p className="text-xs font-bold text-slate-500 mt-1 flex items-center gap-1.5">
+                            <MapPin size={12}/> {load.collection.producerUnitName || load.collection.location}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">

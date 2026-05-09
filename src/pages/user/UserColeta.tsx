@@ -6,7 +6,7 @@ import { PremiumCard, ReadOnlyBanner, EmptyState, FloatingLabelInput } from '../
 import { uploadImage } from '../../lib/storage';
 
 const UserColeta = () => {
-  const { producers, products, currentUser, loads, addLoad, addProducer, companies } = useAgro();
+  const { producers, producerUnits, products, currentUser, loads, addLoad, addProducer, companies } = useAgro();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProducerModalOpen, setIsProducerModalOpen] = useState(false);
@@ -18,7 +18,7 @@ const UserColeta = () => {
   const [isUploading, setIsUploading] = useState(false);
   
   const [form, setForm] = useState({ 
-    producerId: '', location: '', category: 'Frutas', type: '', boxes: '', grossWeight: '', loaderName: '', observations: '',
+    producerId: '', producerUnitId: '', location: '', category: 'Frutas', type: '', boxes: '', grossWeight: '', loaderName: '', observations: '',
     date: new Date().toISOString().split('T')[0],
     time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   });
@@ -47,6 +47,8 @@ const UserColeta = () => {
 
   const totalPages = Math.max(1, Math.ceil(filteredLoads.length / ITEMS_PER_PAGE));
   const visibleLoads = filteredLoads.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const selectedProducerUnits = producerUnits.filter(unit => unit.producerId === form.producerId && unit.isActive);
+  const selectedProducerUnit = selectedProducerUnits.find(unit => unit.id === form.producerUnitId);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -87,7 +89,7 @@ const UserColeta = () => {
 
   const resetForm = () => {
     setForm({ 
-      producerId: '', location: '', category: 'Frutas', type: '', boxes: '', grossWeight: '', loaderName: '', observations: '',
+      producerId: '', producerUnitId: '', location: '', category: 'Frutas', type: '', boxes: '', grossWeight: '', loaderName: '', observations: '',
       date: new Date().toISOString().split('T')[0],
       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
     });
@@ -101,6 +103,11 @@ const UserColeta = () => {
     
     setIsUploading(true);
     try {
+      if (selectedProducerUnits.length > 0 && !form.producerUnitId) {
+        toast.error('Selecione a roca/unidade de origem desta coleta.');
+        return;
+      }
+
       const photosEvidence = photos.map((url, i) => ({ id: `photo_${Date.now()}_${i}`, url, type: 'collection' as const }));
       
       const combinedDate = new Date(`${form.date}T${form.time}:00`);
@@ -116,7 +123,9 @@ const UserColeta = () => {
         collection: {
           id: crypto.randomUUID(),
           date: nowIso,
-          location: form.location,
+          location: selectedProducerUnit ? (selectedProducerUnit.location || selectedProducerUnit.name) : form.location,
+          producerUnitId: selectedProducerUnit?.id,
+          producerUnitName: selectedProducerUnit?.name,
           category: form.category,
           type: form.type,
           boxes: Number(form.boxes),
@@ -286,6 +295,9 @@ const UserColeta = () => {
                       {isMyLoad && <span className="bg-brand-soft text-brand text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Meu Registro</span>}
                     </div>
                     <p className="text-lg font-black text-brand leading-tight truncate">{prod?.name}</p>
+                    {(load.collection.producerUnitName || load.collection.location) && (
+                      <p className="text-xs font-bold text-slate-500 truncate mt-0.5">{load.collection.producerUnitName || load.collection.location}</p>
+                    )}
                   </div>
                   <div className="shrink-0 flex items-start">
                     {getStatusBadge(load.status)}
@@ -415,6 +427,7 @@ const UserColeta = () => {
                       setForm({
                         ...form, 
                         producerId: selectedId,
+                        producerUnitId: '',
                         location: selectedProd ? selectedProd.property : ''
                       });
                     }}
@@ -424,7 +437,32 @@ const UserColeta = () => {
                   </select>
                 </div>
 
-                <FloatingLabelInput label="Local Exato" placeholder="Talhão, Lote, Gleba..." value={form.location} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({...form, location: e.target.value})} required />
+                {selectedProducerUnits.length > 0 ? (
+                  <>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-brand/70 uppercase tracking-widest ml-1">Roca / Unidade *</label>
+                      <select
+                        required
+                        className="w-full bg-white border-[1.5px] border-slate-100 focus:border-brand focus:ring-4 focus:ring-brand/15 rounded-2xl px-4 py-4 outline-none transition-all text-brand font-bold appearance-none shadow-sm"
+                        value={form.producerUnitId}
+                        onChange={e => {
+                          const unit = selectedProducerUnits.find(u => u.id === e.target.value);
+                          setForm({
+                            ...form,
+                            producerUnitId: e.target.value,
+                            location: unit ? (unit.location || unit.name) : ''
+                          });
+                        }}
+                      >
+                        <option value="">Selecione...</option>
+                        {selectedProducerUnits.map(unit => <option key={unit.id} value={unit.id}>{unit.name}</option>)}
+                      </select>
+                    </div>
+                    <FloatingLabelInput label="Local / Referencia" placeholder="Endereco ou referencia da unidade" value={form.location} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({...form, location: e.target.value})} required />
+                  </>
+                ) : (
+                  <FloatingLabelInput label="Local Exato" placeholder="Talhao, Lote, Gleba..." value={form.location} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({...form, location: e.target.value})} required />
+                )}
               </div>
 
               <div className="h-px bg-agro-stone/50 my-8"></div>

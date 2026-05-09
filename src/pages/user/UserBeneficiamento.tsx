@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAgro } from '../../contexts/AgroContext';
-import { Factory, Package, ArrowRight, Lock as LockIcon, Camera, X, Leaf, Warehouse, ShoppingCart, Cog, Calendar, Clock } from 'lucide-react';
+import { Factory, Package, ArrowRight, Lock as LockIcon, Camera, X, Leaf, Warehouse, ShoppingCart, Cog, Calendar, Clock, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { PremiumCard, ReadOnlyBanner, EmptyState, FloatingLabelInput } from '../../components/shared/UserUIComponents';
 import { uploadImage } from '../../lib/storage';
@@ -126,6 +126,11 @@ const UserBeneficiamento = () => {
                   <div>
                     <p className="text-[10px] font-bold opacity-30 mb-0.5 tracking-widest uppercase">Aguardando Peso</p>
                     <p className="text-lg font-black text-brand leading-tight">{prod?.name}</p>
+                    {(load.collection.producerUnitName || load.collection.location) && (
+                      <p className="text-xs font-bold text-slate-500 mt-0.5 flex items-center gap-1">
+                        <MapPin size={11} /> {load.collection.producerUnitName || load.collection.location}
+                      </p>
+                    )}
                     <div className="flex items-center gap-2 mt-1.5">
                        <span className="bg-brand-soft text-brand px-2 py-0.5 rounded-lg text-[10px] font-bold border border-brand-soft">{load.collection.type}</span>
                        <span className="text-[10px] font-black text-brand bg-brand-soft px-2 py-0.5 rounded-lg">Roça: {load.collection.grossWeight} kg</span>
@@ -158,6 +163,11 @@ const UserBeneficiamento = () => {
                 <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
                 <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-1">Carga de Origem</p>
                 <h3 className="font-black text-2xl mb-4 text-white uppercase tracking-tight">{producers.find(p => p.id === selectedLoad.producerId)?.name}</h3>
+                {(selectedLoad.collection.producerUnitName || selectedLoad.collection.location) && (
+                  <p className="text-xs font-bold text-white/80 mb-4 flex items-center gap-1.5">
+                    <MapPin size={12} /> {selectedLoad.collection.producerUnitName || selectedLoad.collection.location}
+                  </p>
+                )}
                 <div className="flex justify-between items-end border-t border-white/10 pt-4">
                    <div className="flex items-center gap-3">
                      {selectedProduct?.imageUrl ? (

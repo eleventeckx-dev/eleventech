@@ -56,6 +56,18 @@ export type Producer = {
   updatedAt: string;
 };
 
+export type ProducerUnit = {
+  id: string;
+  companyId: string;
+  producerId: string;
+  name: string;
+  description?: string;
+  location?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Product = {
   id: string;
   companyId: string;
@@ -76,6 +88,8 @@ export type CollectionRecord = {
   id: string;
   date: string;
   location: string;
+  producerUnitId?: string;
+  producerUnitName?: string;
   category: string;
   type: string;
   boxes: number;
